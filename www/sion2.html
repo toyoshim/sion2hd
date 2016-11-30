@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+  <head>
+    <title>SION2 HD</title>
+    <meta name="theme-color" content="#333333">
+    <meta charset="utf-8">
+    <link rel="manifest" href="manifest.json">
+    <link
+        href="https://fonts.googleapis.com/css?family=Geo|Audiowide|Fira+Mono"
+        rel="stylesheet">
+    <!--
+     Copyright 2016 Takashi Toyoshima <toyoshim@gmail.com>. All rights reserved.
+     Use of this source code is governed by a BSD-style license that can be
+     found in the LICENSE file.
+    -->
+    <script>
+      document.fonts.load('10px Audiowide');
+      document.fonts.load('10px \'Fira Mono\'');
+      document.fonts.load('10px Geo');
+    </script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #000;
+      }
+      div {
+        border: 0px none;
+      }
+      canvas {
+        display: block;
+        border: 0px none;
+        position: absolute;
+        left: 0px;
+        top: 0px;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <canvas id="canvas0" style="z-index: 0;"></canvas>
+      <canvas id="canvas1" style="z-index: 1;"></canvas>
+      <canvas id="canvas2" style="z-index: 2;"></canvas>
+      <canvas id="canvas3" style="z-index: 3;"></canvas>
+    </div>
+    <script type="text/javascript" charset="UTF-8" src="magic2.js"></script>
+    <script type='text/javascript'>
+      var canvas = document.getElementsByTagName('canvas');
+      /* global Magic2 */
+      var magic2 = new Magic2(Array.prototype.map.call(canvas, function(c) {
+        // Changes canvas size to fullfill the window.
+        c.width = window.innerWidth;
+        c.height = window.innerHeight;
+        return c.getContext('2d');
+      }));
+      var Module = {
+        preRun: [],
+        postRun: [],
+        arguments: ['sion2/sion2.x'],
+        print: function(text) {
+          if (arguments.length > 1)
+            text = Array.prototype.slice.call(arguments).join('\n');
+          console.warn(text);
+        },
+        printErr: function(text) {
+          if (arguments.length > 1)
+            text = Array.prototype.slice.call(arguments).join('\n');
+          console.error(text);
+        },
+        canvas: function() {
+          return canvas[0];
+        },
+        setStatus: function(text) {
+          console.info('status:', text);
+        }
+      };
+      // Hooks up so that Emscripten's main loop uses requestAnimationFrame.
+      window._setTimeout = window.setTimeout;
+      window.setTimeout = function (f, t) {
+        if (t < 17)
+          return window.requestAnimationFrame(f);
+        return window._setTimeout(f, t);
+      };
+    </script>
+    <script type="text/javascript" charset="UTF-8" src="iocs.js"></script>
+    <script type="text/javascript" charset="UTF-8" src="io.js"></script>
+    <script type="text/javascript" charset="ShiftJIS" src="run68.js"></script>
+  </body>
+</html>
