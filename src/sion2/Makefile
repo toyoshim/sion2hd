@@ -52,12 +52,12 @@ $(OUT)/%.o: $(RUN68)/%.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 .PHONY: all clean
-all: $(OUT) $(OUT)/run68.html
+all: $(OUT) $(OUT)/sion2.html
 
 clean:
 	rm -rf $(OUT)
 
-$(OUT)/run68.html: $(OBJS) runtime68.js
+$(OUT)/sion2.html: $(OBJS) runtime68.js
 	$(CC) -o $@ $(LDFLAGS) $(OBJS)
 
 $(OUT):
