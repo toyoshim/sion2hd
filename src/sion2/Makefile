@@ -38,7 +38,8 @@ SRCS	= \
 	$(SION2)/doscall.c \
 	$(SION2)/iocscall.c \
 	$(SION2)/magic2call.c \
-	$(SION2)/memop.c
+	$(SION2)/memop.c \
+	$(SION2)/zmusiccall.c
 
 OBJS	= $(addprefix $(OUT)/, $(notdir $(SRCS:.c=.o)))
 

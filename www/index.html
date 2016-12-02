@@ -13,11 +13,6 @@
      Use of this source code is governed by a BSD-style license that can be
      found in the LICENSE file.
     -->
-    <script>
-      document.fonts.load('10px Audiowide');
-      document.fonts.load('10px \'Fira Mono\'');
-      document.fonts.load('10px Geo');
-    </script>
     <style>
       body {
         margin: 0;
@@ -45,6 +40,18 @@
     </div>
     <script type="text/javascript" charset="UTF-8" src="magic2.js"></script>
     <script type='text/javascript'>
+      var zmusic = new Worker('worker_zmusic.js');
+      var zmusicPromise = new Promise(function(resolve, reject) {
+        zmusic.addEventListener('message', function(e) {
+          if (e.data.type == 'dos' && e.data.func == 'keepr' && e.data.code == 0)
+            resolve();
+          else
+            console.log('zmusic.js', e.data);
+        });
+      });
+      document.fonts.load('10px Audiowide');
+      document.fonts.load('10px \'Fira Mono\'');
+      document.fonts.load('10px Geo');
       var canvas = document.getElementsByTagName('canvas');
       /* global Magic2 */
       var magic2 = new Magic2(Array.prototype.map.call(canvas, function(c) {
@@ -67,11 +74,15 @@
             text = Array.prototype.slice.call(arguments).join('\n');
           console.error(text);
         },
-        canvas: function() {
-          return canvas[0];
-        },
-        setStatus: function(text) {
-          console.info('status:', text);
+        preInit: function() {
+          Module.addRunDependency("zmusic");
+          zmusicPromise.then(function() {
+            Module.removeRunDependency("zmusic");
+          });
+          Module.addRunDependency("fonts");
+          document.fonts.ready.then(function() {
+            Module.removeRunDependency("fonts");
+          });
         }
       };
     </script>

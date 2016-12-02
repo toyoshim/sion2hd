@@ -3,19 +3,18 @@
 # found in the LICENSE file.
 
 OUT	= www
-OBJS	= out/sion2/sion2.js out/sion2/sion2.data out/sion2/sion2.html.mem
+OBJS	= out/sion2/sion2.js out/sion2/sion2.data out/sion2/sion2.html.mem \
+	  out/zmusic/zmusic.js out/zmusic/zmusic.js.mem
 
 TARGET	= $(addprefix $(OUT)/, $(notdir $(OBJS)))
 
-.PHONY: all clean sub
-all: $(TARGET)
-
-$(TARGET): sub
-	cp $(OBJS) $(OUT)/
-
-sub:
+.PHONY: all clean
+all:
 	make -C src/sion2
+	make -C src/zmusic
+	cp $(OBJS) $(OUT)/
 
 clean:
 	make -C src/sion2 clean
+	make -C src/zmusic clean
 	rm -rf out $(TARGET)

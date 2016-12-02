@@ -7,9 +7,9 @@ RUN68	= ../../third_party/run68/src
 MOD68	= ../../mod
 ZMSC2	= .
 CC	= emcc
-DEFS	= -DFNC_TRACE -DENV_FROM_INI
+DEFS	= -DFNC_TRACE -DENV_FROM_INI -DEMSCRIPTEN_WORKER
 CFLAGS	= $(DEFS) -O2 -include $(MOD68)/preinc.h -I $(RUN68)
-LDFLAGS	= -lm -O2 --js-library runtime68.js --preload-file ../../zmusic
+LDFLAGS	= -lm -O2 --js-library runtime68.js
 SRCS	= \
 	$(RUN68)/ansicolor-w32.c \
 	$(RUN68)/calc.c \
@@ -51,12 +51,12 @@ $(OUT)/%.o: $(RUN68)/%.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 .PHONY: all clean
-all: $(OUT) $(OUT)/zmusic.html
+all: $(OUT) $(OUT)/zmusic.js
 
 clean:
 	rm -rf $(OUT)
 
-$(OUT)/zmusic.html: $(OBJS) runtime68.js
+$(OUT)/zmusic.js: $(OBJS) runtime68.js
 	$(CC) -o $@ $(LDFLAGS) $(OBJS)
 
 $(OUT):

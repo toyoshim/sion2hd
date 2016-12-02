@@ -20,6 +20,8 @@ void run68_abort(long adr) {
   abort();
 }
 
+static int hsync = 0x80;
+
 long mem_get(long adr, char size) {
   UChar   *mem;
   long	d;
@@ -40,18 +42,24 @@ long mem_get(long adr, char size) {
       return 0x8AFF0540;  // Returns default vector for ZMUSIC not being upset.
 
     // ZMUSIC tried to check NUL driver installation.
-    if (0x006810 <= adr && adr < 0x006838) {
+    if (0x006810 <= adr && adr < 0x006828) {
       // First, it tried to find 'NUL     ' mark in memory region after the
-      // first memory block, 0x006800.
-      if (adr == 0x006830)
+      // first memory block, 0x006800. This is the device name of NUL driver
+      // header.
+      if (adr == 0x00681E)
         return 'N';
-      if (adr == 0x006831)
+      if (adr == 0x00681F)
         return 'U';
-      if (adr == 0x006832)
+      if (adr == 0x006820)
         return 'L';
       // Second, it tried to check if found address - 10 returns 0x8024.
-      if (adr == 0x006826)
+      // This is the device attribute of NUL driver header.
+      if (adr == 0x006814)
         return 0x8024;
+      // Last, it reads founc address - 14 to check the next driver. Returns
+      // 0xFFFFFFFF to express this is the last one.
+      if (adr == 0x006810)
+        return 0xFFFFFFFF;
       return ' ';
     }
 
@@ -59,6 +67,20 @@ long mem_get(long adr, char size) {
     // Here, we just returns it immediately.
     if (adr == 0xFF0000)
       return 0x4E73;
+
+    // ZMUSIC counts H-SYNC flips for waiting a little.
+    if (adr == 0xE88001) {  // MFP GPIP
+      hsync ^= 0x80;
+      return 0xFF ^ hsync;
+    }
+
+    // OPM registers.
+    if (adr == 0xE90003) {  // Status
+      // Bit 7: BUSY
+      // Bit 1: TIMER-B OVERFLOW
+      // Bit 0: TIMER-A OVERFLOW
+      return 0;
+    }
 
     if (adr >= 0xC00000) {
       printf("ERROR: I/O port or ROM read access\n");
@@ -86,6 +108,8 @@ long mem_get(long adr, char size) {
   }
 }
 
+static int opm_reg = 0;
+
 void mem_set( long adr, long d, char size )
 {
   UChar   *mem;
@@ -97,6 +121,17 @@ void mem_set( long adr, long d, char size )
       return;
     if (adr == 0x000228)  // MIDI FIFO-Rx ready vector.
       return;
+
+    // OPM registers.
+    if (adr == 0xE90001) {  // Register
+      opm_reg = d;
+      return;
+    }
+    if (adr == 0xE90003) {  // Data
+      //printf("OPM: $%02x <= $%02x\n", opm_reg, d);
+      return;
+    }
+
     if (adr >= 0xC00000) {
       printf("ERROR: I/O port or ROM write access\n");
       run68_abort(adr);

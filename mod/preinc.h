@@ -15,4 +15,5 @@
 #define _strlwr(p)	{ char *s; for (s = p; *s; s++) *s = tolower(*s); }
 
 int	magic2_call();
+int	zmusic_call();
 /* MOD END */

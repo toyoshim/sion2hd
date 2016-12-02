@@ -379,7 +379,17 @@ Restart:
 	usp = 0;
 /* MOD BEGIN */
 #if defined(EMSCRIPTEN)
+# if defined(EMSCRIPTEN_WORKER)
+    do {
+	  if ( (pc & 0xFF000001) != 0 ) {
+        fprintf(stderr, "address error at $%08x\n", pc);
+        break;
+	  }
+    } while (FALSE == prog_exec());
+    emscripten_exit_with_live_runtime();
+# else
     emscripten_set_main_loop(exec_emscripten, 0, 1);
+# endif
 #else
 /* MOD END */
 	if ( ini_info.trap_emulate == TRUE )
