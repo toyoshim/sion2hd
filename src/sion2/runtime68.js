@@ -43,5 +43,16 @@ mergeInto(LibraryManager.library, {
   },
   jsrt_io_sprite_data: function(index, data) {
     io_sprite_data(index, data);
-  }
+  },
+  jsrt_zmusic_bind: function(address, name) {
+    var s = [];
+    for (var i = name; Module.HEAPU8[i]; ++i)
+      s.push(String.fromCharCode(Module.HEAPU8[i]));
+    zmusic_bind(address, s.join(''));
+  },
+  jsrt_zmusic_call: function(d1, d2, d3, d4, a1) {
+    zmusic_call(d1, d2, d3, d4, a1);
+  },
+  
+  jsrt_zmusic_table: {}
 });

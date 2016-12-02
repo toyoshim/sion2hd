@@ -1,3 +1,6 @@
+self.addEventListener('message', function(e) {
+  console.log(e.data, e.data.zmd);
+});
 var Module = {
   arguments: [
     "ZMUSIC.X",

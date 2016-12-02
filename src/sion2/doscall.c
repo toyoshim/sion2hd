@@ -8,6 +8,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+extern void jsrt_zmusic_bind(ULong addr, char* filename);
+
 static void super() {
   long data = mem_get(ra[7], S_LONG);
   if (!data) {
@@ -34,6 +36,12 @@ static ULong pcg_read() {
   return len;
 }
 
+static char* lastOpenedFilename = NULL;
+
+static const int kPcgFd = 128;
+static const int kDatFd = 129;
+static const int kZmdFd = 130;
+
 int dos_call(UChar code) {
   switch (code) {
     case 0x0C:    // KFLUSH
@@ -46,27 +54,21 @@ int dos_call(UChar code) {
     case 0x3D: {  // OPEN
       ULong nameptr = mem_get(ra[7], S_LONG);
       UShort mode = mem_get(ra[7] + 4, S_WORD);
-      char name[128];
-      snprintf(name, 128, "sion2/%s", &prog_ptr[nameptr]);
-      // TODO:
-      //  - Use IDBFS for HI_SCORE.DAT.
-      //  - Try to load ZMD data in worker side with some hacks.
+      lastOpenedFilename = &prog_ptr[nameptr];
+      // TODO: Use IDBFS for HI_SCORE.DAT.
       if (!strcmp(&prog_ptr[nameptr], "sion2_pcg.SPD"))
-        rd[0] = 128;  // Returns a MAGIC fd.
+        rd[0] = kPcgFd;  // Returns a MAGIC fd.
       else if (!strcmp(&prog_ptr[nameptr], "HI_SCORE.DAT"))
-        rd[0] = 129;  // Returns a MAGIC fd.
+        rd[0] = kDatFd;  // Returns a MAGIC fd.
       else 
-        rd[0] = open(name, O_RDONLY);  // Support readonly mode.
+        rd[0] = kZmdFd;  // Returns a MAGIC fd for ZMD.
       printf("$%06x FUNC(OPEN); file=%s, mode=$%04x => $%08x.\n", pc - 2,
           &prog_ptr[nameptr], mode, rd[0]);
       break;
     }
     case 0x3E: {  // CLOSE
       UShort fileno = mem_get(ra[7], S_WORD);
-      if (128 <= fileno)
-        rd[0] = 0;
-      else
-        rd[0] = close(fileno);
+      rd[0] = 0;
       printf("$%06x FUNC(CLOSE), fd=$%04x => $%08x.\n", pc - 2, fileno, rd[0]);
       break;
     }
@@ -74,10 +76,12 @@ int dos_call(UChar code) {
       UShort fileno = mem_get(ra[7], S_WORD);
       ULong buffer = mem_get(ra[7] + 2, S_LONG);
       ULong len = mem_get(ra[7] + 6, S_LONG);
-      if (128 <= fileno)
+      if (fileno == kPcgFd)
         rd[0] = pcg_read();
       else
-        rd[0] = read(fileno, &prog_ptr[buffer], len);
+        rd[0] = 0;
+      if (fileno == kZmdFd)
+        jsrt_zmusic_bind(buffer + 7, lastOpenedFilename);
       printf("$%06x FUNC(READ); fd=$%04x, buffer=$%08x, len=$%08x => $%08x.\n",
           pc - 2, fileno, buffer, len, rd[0]);
       break;
@@ -86,10 +90,10 @@ int dos_call(UChar code) {
       UShort fileno = mem_get(ra[7], S_WORD);
       ULong offset = mem_get(ra[7] + 2, S_LONG);
       UShort mode = mem_get(ra[7] + 6, S_WORD);
-      if (128 <= fileno)
-        rd[0] = 0;
+      if (fileno == kZmdFd)
+        rd[0] = 16;
       else
-        rd[0] = lseek(fileno, offset, mode);
+        rd[0] = 0;
       printf("$%06x FUNC(SEEK); fd=$%04x, offset=$%08x, mode=$%04x => $%08x.\n",
           pc - 2, fileno, offset, mode, rd[0]);
       break;

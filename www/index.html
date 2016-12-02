@@ -45,10 +45,22 @@
         zmusic.addEventListener('message', function(e) {
           if (e.data.type == 'dos' && e.data.func == 'keepr' && e.data.code == 0)
             resolve();
-          else
-            console.log('zmusic.js', e.data);
         });
       });
+      var zmusicBind = {};
+      window.zmusic_bind = function(address, name) {
+        zmusicBind[address] = name;
+      };
+      window.zmusic_call = function(d1, d2, d3, d4, a1) {
+        zmusic.postMessage({
+          d1: d1,
+          d2: d2,
+          d3: d3,
+          d4: d4,
+          a1: a1,
+          zmd: zmusicBind[a1]
+        });
+      };
       document.fonts.load('10px Audiowide');
       document.fonts.load('10px \'Fira Mono\'');
       document.fonts.load('10px Geo');
