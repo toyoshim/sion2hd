@@ -38,7 +38,7 @@ int iocs_call() {
       break;
     case 0x11:  // CONTRAST
       if (rd[1] < 0)
-        printf( "$%06x IOCS(CONTRAST): read is not impl.\n", pc - 2);
+        printf("$%06x IOCS(CONTRAST): read is not impl.\n", pc - 2);
       else
         jsrt_iocs_contrast(rd[1]);
       break;
@@ -70,7 +70,7 @@ int iocs_call() {
       jsrt_iocs_bgtextst(rd[1], rd[2], rd[3], rd[4]);
       break;
     default:
-      printf( "$%06x IOCS(%02X): NOT IMPL.\n", pc - 2, no);
+      printf("$%06x IOCS(%02X): NOT IMPL.\n", pc - 2, no);
       break;
   }
   return 0;

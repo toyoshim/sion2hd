@@ -38,7 +38,7 @@ int dos_call(UChar code) {
       read();
       break;
     default:
-      printf( "$%06x FUNC(%02X): NOT IMPL.\n", pc - 2, code);
+      printf("$%06x FUNC(%02X): NOT IMPL.\n", pc - 2, code);
       rd[0] = 0;
       break;
   }

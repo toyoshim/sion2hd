@@ -1077,10 +1077,13 @@ static	int	Trap( char code )
 	if ( (code & 0x0F) == 15 ) {
 		return( iocs_call() );
 /* MOD BEGIN */
+        // Traps PCM8 calls.
+	} else if ( (code & 0x0F) == 2 ) {
+		printf("$%06x PCM8\n", pc - 2);
+		return( FALSE );
         // Traps ZMUSIC calls.
 	} else if ( (code & 0x0F) == 3 ) {
-		if (func_trace_f)
-			printf("$%06x ZMUSIC\n", pc-2);
+		printf("$%06x ZMUSIC\n", pc - 2);
 		return( FALSE );
 /* MOD END */
 	} else if (((code & 0x0f) >= 0x0) && ((code & 0x0f) <= 0x8)) {

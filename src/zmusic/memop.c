@@ -1,0 +1,125 @@
+// Copyright 2016 Takashi Toyoshima <toyoshim@gmail.com>. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+#include <stdio.h>
+#include <stdlib.h>
+#include "run68.h"
+
+void run68_abort(long adr) {
+  int	i;
+  printf("*ABORT*");
+  printf("d0-7=%08lx", rd[0]);
+  for (i = 1; i < 8; i++)
+    printf(",%08lx", rd[i]);
+  printf("\n");
+  printf("a0-7=%08lx", ra[0]);
+  for (i = 1; i < 8; i++)
+    printf(",%08lx", ra[i]);
+  printf("\n");
+  printf( "pc=%08lx,sr=%04x,adr=%08lx\n", pc, sr, adr);
+  abort();
+}
+
+long mem_get(long adr, char size) {
+  UChar   *mem;
+  long	d;
+  
+  adr &= 0x00FFFFFF;
+  mem = (UChar*)prog_ptr + adr;
+  if (adr < ENV_TOP || adr >= mem_aloc) {
+    // ZMUSIC tried to check PCM8 installation.
+    if (adr == 0x000088)  // Trap #2 vector (PCM8).
+      return 0x000408;    // Returns a dummy PCM8 vector.
+    if (adr == 0x000400)  // Vector - 8 returns MAGIC number.
+      return 'PCM8';
+
+    // Mimic vector information.
+    if (adr == 0x00010C)  // MFP FM vector.
+      return 0x43FF0540;  // Returns default vector for ZMUSIC not being upset.
+    if (adr == 0x000228)  // MIDI FIFO-Rx ready vector.
+      return 0x8AFF0540;  // Returns default vector for ZMUSIC not being upset.
+
+    // ZMUSIC tried to check NUL driver installation.
+    if (0x006810 <= adr && adr < 0x006838) {
+      // First, it tried to find 'NUL     ' mark in memory region after the
+      // first memory block, 0x006800.
+      if (adr == 0x006830)
+        return 'N';
+      if (adr == 0x006831)
+        return 'U';
+      if (adr == 0x006832)
+        return 'L';
+      // Second, it tried to check if found address - 10 returns 0x8024.
+      if (adr == 0x006826)
+        return 0x8024;
+      return ' ';
+    }
+
+    // ZMUSIC tried to find 0x4E73 inside IPL area for some reasons.
+    // Here, we just returns it immediately.
+    if (adr == 0xFF0000)
+      return 0x4E73;
+
+    if (adr >= 0xC00000) {
+      printf("ERROR: I/O port or ROM read access\n");
+      run68_abort(adr);
+    }
+    if (SR_S_REF() == 0 || adr >= mem_aloc) {
+      printf("ERROR: Invalid read access\n");
+      run68_abort(adr);
+    }
+  }
+
+  switch(size) {
+    case S_BYTE:
+      return *mem;
+    case S_WORD:
+      d = *(mem++);
+      d = ((d << 8) | *mem);
+      return d;
+    default:	/* S_LONG */
+      d = *(mem++);
+      d = ((d << 8) | *(mem++));
+      d = ((d << 8) | *(mem++));
+      d = ((d << 8) | *mem);
+      return d;
+  }
+}
+
+void mem_set( long adr, long d, char size )
+{
+  UChar   *mem;
+
+  adr &= 0x00FFFFFF;
+  mem = (UChar *)prog_ptr + adr;
+  if (adr < ENV_TOP || adr >= mem_aloc) {
+    if (adr == 0x0000B0)  // Trap #12 vector (COPY).
+      return;
+    if (adr == 0x000228)  // MIDI FIFO-Rx ready vector.
+      return;
+    if (adr >= 0xC00000) {
+      printf("ERROR: I/O port or ROM write access\n");
+      run68_abort(adr);
+    }
+    if (SR_S_REF() == 0 || adr >= mem_aloc) {
+      printf("ERROR: Invalid write access\n");
+      run68_abort(adr);
+    }
+  }
+
+  switch( size ) {
+    case S_BYTE:
+      *mem = (d & 0xFF);
+      break;
+    case S_WORD:
+      *(mem++) = ((d >> 8) & 0xFF);
+      *mem = (d & 0xFF);
+      break;
+    default:	/* S_LONG */
+      *(mem++) = ((d >> 24) & 0xFF);
+      *(mem++) = ((d >> 16) & 0xFF);
+      *(mem++) = ((d >> 8) & 0xFF);
+      *mem = (d & 0xFF);
+      break;
+  }
+}

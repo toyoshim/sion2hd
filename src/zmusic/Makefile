@@ -2,14 +2,14 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-OUT	= ../../out/sion2
+OUT	= ../../out/zmusic
 RUN68	= ../../third_party/run68/src
 MOD68	= ../../mod
-SION2	= .
+ZMSC2	= .
 CC	= emcc
 DEFS	= -DFNC_TRACE -DENV_FROM_INI
 CFLAGS	= $(DEFS) -O2 -include $(MOD68)/preinc.h -I $(RUN68)
-LDFLAGS	= -lm -O2 --js-library runtime68.js --preload-file ../../sion2
+LDFLAGS	= -lm -O2 --js-library runtime68.js --preload-file ../../zmusic
 SRCS	= \
 	$(RUN68)/ansicolor-w32.c \
 	$(RUN68)/calc.c \
@@ -35,10 +35,9 @@ SRCS	= \
 	$(MOD68)/load.c \
 	$(MOD68)/mem.c \
 	$(MOD68)/run68.c \
-	$(SION2)/doscall.c \
-	$(SION2)/iocscall.c \
-	$(SION2)/magic2call.c \
-	$(SION2)/memop.c
+	$(ZMSC2)/doscall.c \
+	$(ZMSC2)/iocscall.c \
+	$(ZMSC2)/memop.c
 
 OBJS	= $(addprefix $(OUT)/, $(notdir $(SRCS:.c=.o)))
 
@@ -52,12 +51,12 @@ $(OUT)/%.o: $(RUN68)/%.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 .PHONY: all clean
-all: $(OUT) $(OUT)/run68.html
+all: $(OUT) $(OUT)/zmusic.html
 
 clean:
 	rm -rf $(OUT)
 
-$(OUT)/run68.html: $(OBJS) runtime68.js
+$(OUT)/zmusic.html: $(OBJS) runtime68.js
 	$(CC) -o $@ $(LDFLAGS) $(OBJS)
 
 $(OUT):
