@@ -1083,7 +1083,7 @@ static	int	Trap( char code )
 		return( FALSE );
         // Traps ZMUSIC calls.
 	} else if ( (code & 0x0F) == 3 ) {
-		printf("$%06x ZMUSIC\n", pc - 2);
+		printf("$%06x ZMUSIC: $%08x\n", pc - 2, rd [ 1 ]);
 		return( FALSE );
 /* MOD END */
 	} else if (((code & 0x0f) >= 0x0) && ((code & 0x0f) <= 0x8)) {

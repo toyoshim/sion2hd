@@ -7,13 +7,13 @@ OBJS	= out/sion2/sion2.js out/sion2/sion2.data out/sion2/sion2.html.mem
 
 TARGET	= $(addprefix $(OUT)/, $(notdir $(OBJS)))
 
-.PHONY: all clean
+.PHONY: all clean sub
 all: $(TARGET)
 
-$(TARGET): $(OBJS)
+$(TARGET): sub
 	cp $(OBJS) $(OUT)/
 
-$(OBJS):
+sub:
 	make -C src/sion2
 
 clean:
