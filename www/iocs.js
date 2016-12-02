@@ -29,7 +29,8 @@
   document.addEventListener('touchstart', function(e) {
     var w = window.innerWidth;
     var h = window.innerHeight;
-    for (var touch of e.changedTouches) {
+    for (var i = 0; i < e.changedTouches.length; ++i) {
+      var touch = e.changedTouches[i];
       if (touch.clientY < (h / 3)) {
         if (touch.clientX < (w / 2)) {
           touches.esc.id = touch.identifier;
@@ -57,7 +58,8 @@
   }, false);
 
   document.addEventListener('touchend', function(e) {
-    for (var touch of e.changedTouches) {
+    for (var i = 0; i < e.changedTouches.length; ++i) {
+      var touch = e.changedTouches[i];
       var id = touch.identifier;
       if (id == touches.esc.id) {
         touches.esc.id = -1;
@@ -89,7 +91,8 @@
 
   document.addEventListener('touchmove', function(e) {
     e.preventDefault();
-    for (var touch of e.changedTouches) {
+    for (var i = 0; i < e.changedTouches.length; ++i) {
+      var touch = e.changedTouches[i];
       if (touch.identifier != touches.axes.id)
         continue;
       var dx = touches.axes.x - touch.clientX;
