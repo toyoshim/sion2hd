@@ -379,7 +379,7 @@ Restart:
 	usp = 0;
 /* MOD BEGIN */
 #if defined(EMSCRIPTEN)
-    emscripten_set_main_loop(exec_emscripten, 60, 1);
+    emscripten_set_main_loop(exec_emscripten, 0, 1);
 #else
 /* MOD END */
 	if ( ini_info.trap_emulate == TRUE )
