@@ -9,7 +9,8 @@ ZMSC2	= .
 CC	= emcc
 DEFS	= -DFNC_TRACE -DENV_FROM_INI -DEMSCRIPTEN_WORKER
 CFLAGS	= $(DEFS) -O2 -include $(MOD68)/preinc.h -I $(RUN68)
-LDFLAGS	= -lm -O2 --js-library runtime68.js
+EXPORTS	= -s EXPORTED_FUNCTIONS="['_main', '_zmusic_trap']"
+LDFLAGS	= -lm -O2 --js-library runtime68.js $(EXPORTS)
 SRCS	= \
 	$(RUN68)/ansicolor-w32.c \
 	$(RUN68)/calc.c \

@@ -69,7 +69,7 @@ int dos_call(UChar code) {
     case 0x3E: {  // CLOSE
       UShort fileno = mem_get(ra[7], S_WORD);
       rd[0] = 0;
-      printf("$%06x FUNC(CLOSE), fd=$%04x => $%08x.\n", pc - 2, fileno, rd[0]);
+      printf("$%06x FUNC(CLOSE); fd=$%04x => $%08x.\n", pc - 2, fileno, rd[0]);
       break;
     }
     case 0x3F: {  // READ

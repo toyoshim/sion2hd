@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include "run68.h"
 
+extern char* zmusic_work;
+
 void run68_abort(long adr) {
   int	i;
   printf("*ABORT*");
@@ -82,13 +84,20 @@ long mem_get(long adr, char size) {
       return 0;
     }
 
-    if (adr >= 0xC00000) {
-      printf("ERROR: I/O port or ROM read access\n");
-      run68_abort(adr);
-    }
-    if (SR_S_REF() == 0 || adr >= mem_aloc) {
-      printf("ERROR: Invalid read access\n");
-      run68_abort(adr);
+    // ZMUSIC virtual work area to realize remote PLAY_CNV_DATA.
+    if (0x100000 <= adr && adr < 0x200000) {
+      mem = &zmusic_work[adr - 0x100000];
+    } else {
+      if (adr >= 0xC00000) {
+        printf("ERROR: I/O port or ROM read access\n");
+        run68_abort(adr);
+      }
+      if (SR_S_REF() == 0 || adr >= mem_aloc) {
+        printf("ERROR: Invalid read access\n");
+        run68_abort(adr);
+      }
+      if (adr < 0x400)
+        printf("WARNING: vector read at $%08x\n", adr);
     }
   }
 
@@ -131,14 +140,20 @@ void mem_set( long adr, long d, char size )
       //printf("OPM: $%02x <= $%02x\n", opm_reg, d);
       return;
     }
-
-    if (adr >= 0xC00000) {
-      printf("ERROR: I/O port or ROM write access\n");
-      run68_abort(adr);
-    }
-    if (SR_S_REF() == 0 || adr >= mem_aloc) {
-      printf("ERROR: Invalid write access\n");
-      run68_abort(adr);
+    // ZMUSIC virtual work area to realize remote PLAY_CNV_DATA.
+    if (0x100000 <= adr && adr < 0x200000) {
+      mem = &zmusic_work[adr - 0x100000];
+    } else {
+      if (adr >= 0xC00000) {
+        printf("ERROR: I/O port or ROM write access\n");
+        run68_abort(adr);
+      }
+      if (SR_S_REF() == 0 || adr >= mem_aloc) {
+        printf("ERROR: Invalid write access\n");
+        run68_abort(adr);
+      }
+      if (adr < 0x400)
+        printf("WARNING: vector write at $%08x\n", adr);
     }
   }
 

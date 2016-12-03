@@ -6,6 +6,7 @@
 extern jsrt_zmusic_call(ULong d1, ULong d2, ULong d3, ULong d4, ULong a1);
 
 int zmusic_call() {
+  rd[0] = 0;
   switch (rd[1]) {
     case 0x00:  // M_INIT
       printf("$%06x ZMUSIC(M_INIT)\n", pc - 2);
