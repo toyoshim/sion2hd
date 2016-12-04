@@ -5,11 +5,12 @@
 OUT	= ../../out/sion2
 RUN68	= ../../third_party/run68/src
 MOD68	= ../../mod
+XFILE	= ../../www/sion2/sion2.x@sion2.x
 SION2	= .
 CC	= emcc
 DEFS	= -DFNC_TRACE -DENV_FROM_INI
 CFLAGS	= $(DEFS) -O2 -include $(MOD68)/preinc.h -I $(RUN68)
-LDFLAGS	= -lm -O2 --js-library runtime68.js --preload-file ../../sion2
+LDFLAGS	= -lm -O2 --js-library runtime68.js --preload-file $(XFILE)
 SRCS	= \
 	$(RUN68)/ansicolor-w32.c \
 	$(RUN68)/calc.c \
