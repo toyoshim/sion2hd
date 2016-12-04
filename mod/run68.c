@@ -379,7 +379,7 @@ Restart:
 	usp = 0;
 /* MOD BEGIN */
 #if defined(EMSCRIPTEN)
-# if defined(EMSCRIPTEN_WORKER)
+# if defined(EMSCRIPTEN_KEEPR)
     do {
 	  if ( (pc & 0xFF000001) != 0 ) {
         fprintf(stderr, "address error at $%08x\n", pc);

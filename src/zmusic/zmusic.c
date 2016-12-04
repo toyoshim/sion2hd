@@ -27,6 +27,8 @@ struct {
 int presets = 0;
 
 void zmusic_timerb(int irq) {
+  if (irq != 1)
+    return;
   // Virtual stack to return 0.
   pc = 0;
   ra[7] -= 4;
@@ -69,7 +71,11 @@ void zmusic_set_val(UChar val) {
 }
 
 short* zmusic_update() {
-  YM2151UpdateOne(0, opm_handle, opm_count);
+  for (int offset = 0; offset < opm_count; offset += 256) {
+    opm_handle[0] = &opm_buffer[offset + 0];
+    opm_handle[1] = &opm_buffer[offset + opm_count];
+    YM2151UpdateOne(0, opm_handle, 256);
+  }
   return opm_buffer;
 }
 

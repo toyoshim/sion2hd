@@ -6,13 +6,14 @@ OUT	= ../../out/zmusic
 RUN68	= ../../third_party/run68/src
 OPM	= ../../third_party/YM2151
 MOD68	= ../../mod
+SION2	= ../../www/sion2
 ZMSC2	= .
 CC	= emcc
-DEFS	= -DFNC_TRACE -DENV_FROM_INI -DEMSCRIPTEN_WORKER
+DEFS	= -DFNC_TRACE -DENV_FROM_INI -DEMSCRIPTEN_KEEPR
 CFLAGS	= $(DEFS) -O2 -include $(MOD68)/preinc.h -I $(RUN68) -I $(OPM)
 ZMFUNCS	= '_zmusic_init', '_zmusic_update', '_zmusic_trap'
 EXPORTS	= -s EXPORTED_FUNCTIONS="['_main', $(ZMFUNCS)]"
-LDFLAGS	= -lm -O2 --js-library runtime68.js $(EXPORTS)
+LDFLAGS	= -lm -O2 --js-library runtime68.js --preload-file $(SION2) $(EXPORTS)
 SRCS	= \
 	$(OPM)/ym2151.c \
 	$(RUN68)/ansicolor-w32.c \
@@ -59,12 +60,12 @@ $(OUT)/%.o: $(RUN68)/%.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 .PHONY: all clean
-all: $(OUT) $(OUT)/zmusic.js
+all: $(OUT) $(OUT)/zmusic.html
 
 clean:
 	rm -rf $(OUT)
 
-$(OUT)/zmusic.js: $(OBJS) runtime68.js
+$(OUT)/zmusic.html: $(OBJS) runtime68.js
 	$(CC) -o $@ $(LDFLAGS) $(OBJS)
 
 $(OUT):

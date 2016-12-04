@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+  <body>
+    <script type='text/javascript'>
+      var audioContext = new AudioContext();
+      var audioBufferSize = 8192;
+      var audioBuffers = [
+          new Float32Array(audioBufferSize),
+          new Float32Array(audioBufferSize)
+      ];
+      var scriptProcessor =
+          audioContext.createScriptProcessor(audioBufferSize, 2, 2);
+      var zmusicReady = false;
+      var zmusicUpdate = function () {
+        var work = Module._zmusic_update();
+        var index = work >> 1;
+        var s16 = Module.HEAP16;
+        var l = audioBuffers[0];
+        var r = audioBuffers[1];
+        var size = audioBufferSize;
+        for (var i = 0; i < size; ++i) {
+          l[i] = s16[index + size] / 32768;
+          r[i] = s16[index++] / 32768;
+        }
+      };
+      scriptProcessor.addEventListener('audioprocess', function(e) {
+        var dl = e.outputBuffer.getChannelData(0);
+        var dr = e.outputBuffer.getChannelData(1);
+        var sl = audioBuffers[0];
+        var sr = audioBuffers[0];
+        var size = audioBufferSize;
+        for (var i = 0; i < size; ++i) {
+          dl[i] = sl[i];
+          dr[i] = sr[i];
+        }
+        if (zmusicReady)
+          setTimeout(zmusicUpdate, 0);
+      }, false);
+      scriptProcessor.connect(audioContext.destination);
+
+      var zmdTable = {};
+
+      window.zmusic_ready = function (code) {
+        Module._zmusic_init(audioContext.sampleRate, audioBufferSize);
+        zmusicReady = true;
+        console.info('A ♪SOUND mind in a SOUND iframe.');
+        window.parent.postMessage({
+            type: 'zmusic',
+            command: 'init'
+        }, document.origin);
+      };
+  
+      window.addEventListener('message', function(e) {
+        if (e.data.type != 'zmusic')
+          return;
+        if (e.data.command == 'bind') {
+          var name = 'www/sion2/' + e.data.value;
+          zmdTable[e.data.key] = {
+            name: name,
+            data: Module.allocate(
+                Module.intArrayFromString(name), 'i8', Module.ALLOC_NORMAL)
+          };
+        } else if (e.data.command == 'trap') {
+          var d = e.data;
+          var zmd = zmdTable[d.a1];
+          if (zmd)
+            console.log('ZMD:', zmd.name);
+          var data = zmd ? zmd.data : null;
+          Module._zmusic_trap(d.d1, d.d2, d.d3, d.d4, d.a1, data);
+        }
+      }, false);
+
+      var Module = {
+        arguments: [
+            'www/sion2/ZMUSIC.X',
+            '-n',
+            '-u',
+            '-t0',
+            '-w0',
+            '-bwww/sion2/SION2.ZPD',
+            '-swww/sion2/NEIRO.ZMS'
+        ],
+        print: function(text) {
+          if (!zmusicReady)
+            return;
+          if (arguments.length > 1)
+            text = Array.prototype.slice.call(arguments).join('\n');
+          console.warn(text);
+        },
+        printErr: function(text) {
+          if (!zmusicReady)
+            return;
+          if (arguments.length > 1)
+            text = Array.prototype.slice.call(arguments).join('\n');
+          console.error(text);
+        }
+      };
+    </script>
+    <script type="text/javascript" charset="ShiftJIS" src="zmusic.js"></script>
+  </body>
+</html>

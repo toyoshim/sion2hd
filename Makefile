@@ -4,7 +4,7 @@
 
 OUT	= www
 OBJS	= out/sion2/sion2.js out/sion2/sion2.data out/sion2/sion2.html.mem \
-	  out/zmusic/zmusic.js out/zmusic/zmusic.js.mem
+	  out/zmusic/zmusic.js out/zmusic/zmusic.data out/zmusic/zmusic.html.mem
 
 TARGET	= $(addprefix $(OUT)/, $(notdir $(OBJS)))
 

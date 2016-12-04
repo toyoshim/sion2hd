@@ -29,6 +29,11 @@
         left: 0px;
         top: 0px;
       }
+      iframe {
+        width: 0;
+        height: 0;
+        border: 0;
+      }
     </style>
   </head>
   <body>
@@ -38,86 +43,34 @@
       <canvas id="canvas2" style="z-index: 2;"></canvas>
       <canvas id="canvas3" style="z-index: 3;"></canvas>
     </div>
+    <iframe src="zmusic.html" id="zmusic"></iframe>
     <script type="text/javascript" charset="UTF-8" src="magic2.js"></script>
     <script type='text/javascript'>
-      var audio = null;
-      var asize = 1024;
-      var asp = null;
-      var abuffer = [];
-      var abufs = 1;
-      for (var i = 0; i < abufs; ++i)
-        abuffer[i] = [new Float32Array(asize), new Float32Array(asize)];
-      var aread = 0;
-      var awrite = 0;
-      var aready = 0;
-      var arequest = 0;
-      var zready = false;
-      if (window['AudioContext']) {
-        audio = new AudioContext();
-        asp = audio.createScriptProcessor(asize, 2, 2);
-        asp.addEventListener('audioprocess', function(e) {
-          if (aready != 0) {
-            var l = e.outputBuffer.getChannelData(0);
-            var r = e.outputBuffer.getChannelData(1);
-            var buf = abuffer[aread];
-            aread = (aread + 1) % abufs;
-            for (var i = 0; i < asize; ++i) {
-              l[i] = buf[0][i];
-              r[i] = buf[1][i];
-            }
-            aready--;
-          }
-          if (zready) {
-            while ((aready + arequest) < abufs) {
-              zmusic.postMessage({ type: 'update' });
-              arequest++;
-            }
+      var zmusic = new Promise(function(resolve, reject) {
+        window.addEventListener('message', function(e) {
+          if (e.data.type == 'zmusic' && e.data.command == 'init') {
+            resolve();
           }
         }, false);
-        asp.connect(audio.destination);
-      }
-      var zmusic = new Worker('worker_zmusic.js');
-      var zmusicPromise = new Promise(function(resolve, reject) {
-        zmusic.addEventListener('message', function(e) {
-          var data = e.data;
-          if (data.type == 'dos' && data.func == 'keepr' && data.code == 0) {
-            if (audio) {
-              zmusic.postMessage({
-                type: 'init',
-                rate: audio.sampleRate,
-                count: asize,
-                bufs: abufs
-              });
-              arequest = 0;
-              zready = true;
-            }
-            resolve();
-          } else if (data.type == 'update') {
-            var buf = abuffer[awrite];
-            awrite = (awrite + 1) % abufs;
-            for (var i = 0; i < asize; ++i) {
-              buf[0][i] = data.l[i]
-              buf[1][i] = data.r[i]
-            }
-            aready++;
-            arequest--;
-          }
-        });
       });
-      var zmusicBind = {};
       window.zmusic_bind = function(address, name) {
-        zmusicBind[address] = name;
+        document.getElementById('zmusic').contentWindow.postMessage({
+          type: 'zmusic',
+          command: 'bind',
+          key: address,
+          value: name
+        }, document.origin);
       };
       window.zmusic_call = function(d1, d2, d3, d4, a1) {
-        zmusic.postMessage({
+        document.getElementById('zmusic').contentWindow.postMessage({
           type: 'zmusic',
+          command: 'trap',
           d1: d1,
           d2: d2,
           d3: d3,
           d4: d4,
-          a1: a1,
-          zmd: zmusicBind[a1]
-        });
+          a1: a1
+        }, document.origin);
       };
       document.fonts.load('10px Audiowide');
       document.fonts.load('10px \'Fira Mono\'');
@@ -146,7 +99,7 @@
         },
         preInit: function() {
           Module.addRunDependency("zmusic");
-          zmusicPromise.then(function() {
+          zmusic.then(function() {
             Module.removeRunDependency("zmusic");
           });
           Module.addRunDependency("fonts");

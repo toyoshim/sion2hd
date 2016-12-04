@@ -86,7 +86,7 @@ long mem_get(long adr, char size) {
       // Bit 7: BUSY
       // Bit 1: TIMER-B OVERFLOW
       // Bit 0: TIMER-A OVERFLOW
-      return 0;
+      return 3;
     }
 
     // ZMUSIC virtual work area to realize remote PLAY_CNV_DATA.
@@ -101,8 +101,6 @@ long mem_get(long adr, char size) {
         printf("ERROR: Invalid read access\n");
         run68_abort(adr);
       }
-      if (adr < 0x400)
-        printf("WARNING: vector read at $%08x\n", adr);
     }
   }
 
@@ -159,8 +157,6 @@ void mem_set( long adr, long d, char size )
         printf("ERROR: Invalid write access\n");
         run68_abort(adr);
       }
-      if (adr < 0x400)
-        printf("WARNING: vector write at $%08x\n", adr);
     }
   }
 

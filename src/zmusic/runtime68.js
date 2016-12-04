@@ -4,11 +4,7 @@
 
 mergeInto(LibraryManager.library, {
   jsrt_dos_keepr: function(code) {
-    self.postMessage({
-      type: 'dos',
-      func: 'keepr',
-      code: code
-    });
+    zmusic_ready(code);
   },
   magic2_call: function(cmd_adr) {
     console.error("magic2_call: should not be called.");
