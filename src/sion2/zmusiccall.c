@@ -11,8 +11,15 @@ int zmusic_call() {
     case 0x00:  // M_INIT
       //printf("$%06x ZMUSIC(M_INIT)\n", pc - 2);
       break;
+    case 0x06:  // M_TRK
+      //printf("$%06x ZMUSIC(M_TRK); track=$%08x, mml=$%08x\n", pc - 2, rd[2], ra[1]);
+      break;
     case 0x08:  // M_PLAY
       //printf("$%06x ZMUSIC(M_PLAY); d2=$%08x, d3=$%08x, d4=$08x\n", pc - 2,
+      //    rd[2], rd[3], rd[4]);
+      break;
+    case 0x0a:  // M_STOP
+      //printf("$%06x ZMUSIC(M_STOP); d2=$%08x, d3=$%08x, d4=$08x\n", pc - 2,
       //    rd[2], rd[3], rd[4]);
       break;
     case 0x11:  // PLAY_CNV_DATA
@@ -26,6 +33,9 @@ int zmusic_call() {
     case 0x14:  // SE_ADPCM2
       //printf("$%06x ZMUSIC(SE_ADPCM2); d2=$%08x, d3=$%08x\n", pc - 2, rd[2],
       //    rd[3]);
+      break;
+    case 0x1A:  // FADE_OUT
+      //printf("$%06x ZMUSIC(FADE_OUT); mode=$%08x\n", pc - 2, rd[2]);
       break;
     default:
       printf("$%06x ZMUSIC($%08x)\n", pc - 2, rd[1]);
