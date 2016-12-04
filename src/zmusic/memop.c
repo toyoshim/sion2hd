@@ -6,6 +6,8 @@
 #include "run68.h"
 
 extern char* zmusic_work;
+extern void zmusic_set_reg(UChar reg);
+extern void zmusic_set_val(UChar val);
 
 void run68_abort(long adr) {
   int	i;
@@ -76,6 +78,9 @@ long mem_get(long adr, char size) {
       return 0xFF ^ hsync;
     }
 
+    if (adr == 0xE88015)    // MFP IMRB
+      return 0;
+
     // OPM registers.
     if (adr == 0xE90003) {  // Status
       // Bit 7: BUSY
@@ -117,8 +122,6 @@ long mem_get(long adr, char size) {
   }
 }
 
-static int opm_reg = 0;
-
 void mem_set( long adr, long d, char size )
 {
   UChar   *mem;
@@ -131,13 +134,17 @@ void mem_set( long adr, long d, char size )
     if (adr == 0x000228)  // MIDI FIFO-Rx ready vector.
       return;
 
+    // MFP IMRB
+    if (adr == 0xE88015)
+      return;
+
     // OPM registers.
     if (adr == 0xE90001) {  // Register
-      opm_reg = d;
+      zmusic_set_reg(d);
       return;
     }
     if (adr == 0xE90003) {  // Data
-      //printf("OPM: $%02x <= $%02x\n", opm_reg, d);
+      zmusic_set_val(d);
       return;
     }
     // ZMUSIC virtual work area to realize remote PLAY_CNV_DATA.

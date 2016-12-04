@@ -1079,7 +1079,7 @@ static	int	Trap( char code )
 /* MOD BEGIN */
         // Traps PCM8 calls.
 	} else if ( (code & 0x0F) == 2 ) {
-		printf("$%06x PCM8\n", pc - 2);
+		// printf("$%06x PCM8\n", pc - 2);
 		return( FALSE );
         // Traps ZMUSIC calls.
 	} else if ( (code & 0x0F) == 3 ) {
