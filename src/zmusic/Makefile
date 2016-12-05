@@ -35,9 +35,9 @@ SRCS	= \
 	$(RUN68)/linec.c \
 	$(RUN68)/lined.c \
 	$(RUN68)/linee.c \
+	$(RUN68)/load.c \
 	$(MOD68)/line4.c \
 	$(MOD68)/linef.c \
-	$(MOD68)/load.c \
 	$(MOD68)/mem.c \
 	$(MOD68)/run68.c \
 	$(ZMSC2)/doscall.c \

@@ -1,9 +1,11 @@
+/* MOD BEGIN */
 // Copyright 2016 Takashi Toyoshima <toyoshim@gmail.com>. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-/* MOD BEGIN */
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <ctype.h>
 
 #define _flushall()	fflush(NULL)
@@ -13,6 +15,9 @@
 #define _gcvt		gcvt
 #define _stricmp	strcasecmp
 #define _strlwr(p)	{ char *s; for (s = p; *s; s++) *s = tolower(*s); }
+
+extern char *fcvt(double number, int ndigits, int *decpt, int *sign);
+extern char *gcvt(double number, int ndigits, char *buf);
 
 int	magic2_call();
 int	zmusic_call();

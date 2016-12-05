@@ -33,14 +33,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <errno.h>
-/* MOD BEGIN */
-// Inserts forward declaration. These should be done by stdlib.h, but.
-// Will need some investigations.
-#if !defined(WIN32) && !defined(DOSX)
-extern char *fcvt(double number, int ndigits, int *decpt, int *sign);
-extern char *gcvt(double number, int ndigits, char *buf);
-#endif
-/* MOD END */
 #include "run68.h"
 
 typedef union {

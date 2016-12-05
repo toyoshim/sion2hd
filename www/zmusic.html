@@ -24,6 +24,8 @@
         }
       };
       scriptProcessor.addEventListener('audioprocess', function(e) {
+        if (document.visibilityState != "visible")
+          zmusicUpdate();
         var dl = e.outputBuffer.getChannelData(0);
         var dr = e.outputBuffer.getChannelData(1);
         var sl = audioBuffers[0];
@@ -33,7 +35,7 @@
           dl[i] = sl[i];
           dr[i] = sr[i];
         }
-        if (zmusicReady)
+        if (zmusicReady && document.visibilityState == "visible")
           setTimeout(zmusicUpdate, 0);
       }, false);
       scriptProcessor.connect(audioContext.destination);
