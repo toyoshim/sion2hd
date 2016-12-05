@@ -3,7 +3,7 @@
   <body>
     <script type='text/javascript'>
       var audioContext = new AudioContext();
-      var audioBufferSize = 8192;
+      var audioBufferSize = 2048;
       var audioBuffers = [
           new Float32Array(audioBufferSize),
           new Float32Array(audioBufferSize)
@@ -11,6 +11,7 @@
       var scriptProcessor =
           audioContext.createScriptProcessor(audioBufferSize, 2, 2);
       var zmusicReady = false;
+      var zmusicBufferReady = false;
       var zmusicUpdate = function () {
         var work = Module._zmusic_update();
         var index = work >> 1;
@@ -22,9 +23,10 @@
           l[i] = s16[index + size] / 32768;
           r[i] = s16[index++] / 32768;
         }
+        zmusicBufferReady = true;
       };
       scriptProcessor.addEventListener('audioprocess', function(e) {
-        if (document.visibilityState != "visible")
+        if (zmusicReady && !zmusicBufferReady)
           zmusicUpdate();
         var dl = e.outputBuffer.getChannelData(0);
         var dr = e.outputBuffer.getChannelData(1);
@@ -35,6 +37,7 @@
           dl[i] = sl[i];
           dr[i] = sr[i];
         }
+        zmusicBufferReady = false;
         if (zmusicReady && document.visibilityState == "visible")
           setTimeout(zmusicUpdate, 0);
       }, false);
