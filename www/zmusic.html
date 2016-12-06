@@ -19,14 +19,14 @@
         if (zmusicBufferReady)
           return;
         var work = Module._zmusic_update();
-        var index = work >> 1;
+        var si = work >> 1;
         var s16 = Module.HEAP16;
         var l = audioBuffers[0];
         var r = audioBuffers[1];
         var size = audioBufferSize;
-        for (var i = 0; i < size; ++i) {
-          l[i] = s16[index + size] / 32768;
-          r[i] = s16[index++] / 32768;
+        for (var di = 0; di < size; ++di) {
+          l[di] = s16[si++] / 32768;
+          r[di] = s16[si++] / 32768;
         }
         zmusicBufferReady = true;
       };

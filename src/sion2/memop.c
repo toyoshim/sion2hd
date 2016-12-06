@@ -85,7 +85,7 @@ long mem_get(long adr, char size) {
   }
 }
 
-void mem_set( long adr, long d, char size )
+void mem_set(long adr, long d, char size)
 {
   UChar   *mem;
 

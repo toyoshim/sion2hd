@@ -1,10 +1,16 @@
 // Copyright 2016 Takashi Toyoshima <toyoshim@gmail.com>. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+extern "C" {
 #include "run68.h"
 
-#include "compat.h"
-#include "ym2151.h"
+ULong zmusic_trap3 = 0;
+ULong zmusic_timer = 0;
+char* zmusic_work = NULL;
+
+}
+
+#include "x68sound.h"
 
 #include <fcntl.h>
 #include <stdlib.h>
@@ -12,23 +18,18 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-ULong zmusic_trap3 = 0;
-ULong zmusic_timer = 0;
+namespace {
 
-char* zmusic_work = NULL;
 short* opm_buffer = NULL;
-short* opm_handle[2] = { NULL, NULL };
 int opm_count = 0;
-UChar opm_reg = 0;
 struct {
   UChar reg;
   UChar val;
 } preset[1024];
 int presets = 0;
 
-void zmusic_timerb(int irq) {
-  if (irq != 1)
-    return;
+// TODO: Wire X68Sound_OpmPeek
+void zmusic_timerb() {
   // Virtual stack to return 0.
   pc = 0;
   ra[7] -= 4;
@@ -40,46 +41,53 @@ void zmusic_timerb(int irq) {
   while (pc && FALSE == prog_exec());
 }
 
-void zmusic_init(int rate, int count) {
-  YM2151Init(1, 4000000, rate);
-  zmusic_work = malloc(0x100000);
+}  // namespace
+
+extern "C" void zmusic_init(int rate, int count) {
+  X68Sound_StartPcm(rate);
+  zmusic_work = (char*)malloc(0x100000);
   opm_count = count;
-  opm_buffer = malloc(count * 2 * 2);
-  opm_handle[0] = &opm_buffer[0];
-  opm_handle[1] = &opm_buffer[opm_count];
-  for (int i = 0; i < 1024; ++i)
-    YM2151WriteReg(0, preset[presets].reg, preset[presets].val);
-  YM2151SetIrqHandler(0, zmusic_timerb);
+  opm_buffer = (short*)malloc(count * 2 * 2);
+  for (int i = 0; i < presets; ++i) {
+    X68Sound_OpmReg(preset[i].reg);
+    X68Sound_OpmPoke(preset[i].val);
+  }
+  X68Sound_OpmInt(zmusic_timerb);
 }
 
-void zmusic_set_reg(UChar reg) {
-  opm_reg = reg;
-}
-
-void zmusic_set_val(UChar val) {
+extern "C" void zmusic_set_reg(UChar reg) {
   if (opm_buffer == NULL) {
     if (presets == 1024) {
       printf("presets overflow\n");
       return;
     }
-    preset[presets].reg = opm_reg;
-    preset[presets].val = val;
-    presets++;
+    preset[presets].reg = reg;
   } else {
-    YM2151WriteReg(0, opm_reg, val);
+    X68Sound_OpmReg(reg);
   }
 }
 
-short* zmusic_update() {
-  for (int offset = 0; offset < opm_count; offset += 256) {
-    opm_handle[0] = &opm_buffer[offset + 0];
-    opm_handle[1] = &opm_buffer[offset + opm_count];
-    YM2151UpdateOne(0, opm_handle, 256);
+extern "C" void zmusic_set_val(UChar val) {
+  if (opm_buffer == NULL) {
+    if (presets == 1024) {
+      printf("presets overflow\n");
+      return;
+    }
+    preset[presets].val = val;
+    presets++;
+    if (presets != 1024)
+      preset[presets].reg = preset[presets - 1].reg;
+  } else {
+    X68Sound_OpmPoke(val);
   }
+}
+
+extern "C" short* zmusic_update() {
+  X68Sound_GetPcm(opm_buffer, opm_count);
   return opm_buffer;
 }
 
-void zmusic_trap(
+extern "C" void zmusic_trap(
     ULong d1, ULong d2, ULong d3, ULong d4, ULong a1, const char* filename) {
   //printf("ZMUSIC ENTER: d1=$%08x, d2=$%08x, d3=$%08x, d4=$%08x, a1=$%08x(%s)\n",
   //    d1, d2, d3, d4, a1, filename);
@@ -106,7 +114,7 @@ void zmusic_trap(
   rd[3] = d3;
   rd[4] = d4;
   ra[1] = a1;
-  
+
   // Virtual stack to return 0.
   pc = 0;
   ra[7] -= 4;

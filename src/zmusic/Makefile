@@ -4,18 +4,18 @@
 
 OUT	= ../../out/zmusic
 RUN68	= ../../third_party/run68/src
-OPM	= ../../third_party/YM2151
+OPM	= ../../third_party/X68Sound/X68Sound
 MOD68	= ../../mod
 SION2	= ../../www/sion2
 ZMSC2	= .
 CC	= emcc
 DEFS	= -DFNC_TRACE -DENV_FROM_INI -DEMSCRIPTEN_KEEPR
-CFLAGS	= $(DEFS) -O2 -include $(MOD68)/preinc.h -I $(RUN68) -I $(OPM)
+CFLAGS	= $(DEFS) -O2 -include $(MOD68)/preinc.h -I $(RUN68) -I $(OPM) -I $(ZMSC2)/compat
+CXXFLAGS= $(CFLAGS) -fno-operator-names
 ZMFUNCS	= '_zmusic_init', '_zmusic_update', '_zmusic_trap'
 EXPORTS	= -s EXPORTED_FUNCTIONS="['_main', $(ZMFUNCS)]"
 LDFLAGS	= -lm -O2 --js-library runtime68.js --preload-file $(SION2) $(EXPORTS)
-SRCS	= \
-	$(OPM)/ym2151.c \
+CSRCS	= \
 	$(RUN68)/ansicolor-w32.c \
 	$(RUN68)/calc.c \
 	$(RUN68)/conditions.c \
@@ -42,16 +42,25 @@ SRCS	= \
 	$(MOD68)/run68.c \
 	$(ZMSC2)/doscall.c \
 	$(ZMSC2)/iocscall.c \
-	$(ZMSC2)/memop.c \
-	$(ZMSC2)/zmusic.c
+	$(ZMSC2)/memop.c
 
-OBJS	= $(addprefix $(OUT)/, $(notdir $(SRCS:.c=.o)))
+CXXSRCS	= \
+	$(ZMSC2)/zmusic.cpp \
+	$(ZMSC2)/compat/compat.cpp \
+	$(ZMSC2)/x68sound.cpp
+
+OBJS	= \
+	$(addprefix $(OUT)/, $(notdir $(CSRCS:.c=.o))) \
+	$(addprefix $(OUT)/, $(notdir $(CXXSRCS:.cpp=.o)))
 
 $(OUT)/%.o: %.c
 	$(CC) $(CFLAGS) -o $@ $<
 
-$(OUT)/%.o: $(OPM)/%.c
-	$(CC) $(CFLAGS) -o $@ $< -include compat.h
+$(OUT)/%.o: $(ZMSC2)/%.cpp
+	$(CC) $(CXXFLAGS) -o $@ $<
+
+$(OUT)/%.o: $(ZMSC2)/compat/%.cpp
+	$(CC) $(CXXFLAGS) -o $@ $<
 
 $(OUT)/%.o: $(MOD68)/%.c
 	$(CC) $(CFLAGS) -o $@ $<

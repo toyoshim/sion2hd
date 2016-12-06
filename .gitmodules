@@ -3,4 +3,4 @@
 	url = https://github.com/rururutan/run68.git
 [submodule "third_party/X68Sound"]
 	path = third_party/X68Sound
-	url = https://github.com/rururutan/X68Sound
+	url = https://github.com/rururutan/X68Sound.git
