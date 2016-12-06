@@ -11,6 +11,10 @@
       id: -1,
       pressed: false
     },
+    f4: {
+      id: -1,
+      pressed: false
+    },
     f5: {
       id: -1,
       pressed: false
@@ -32,9 +36,12 @@
     for (var i = 0; i < e.changedTouches.length; ++i) {
       var touch = e.changedTouches[i];
       if (touch.clientY < (h / 3)) {
-        if (touch.clientX < (w / 2)) {
+        if (touch.clientX < (w * 1 / 3)) {
           touches.esc.id = touch.identifier;
           touches.esc.pressed = true;
+        } else if (touch.clientX < (w * 2 / 3)) {
+          touches.f4.id = touch.identifier;
+          touches.f4.pressed = true;
         } else {
           touches.f5.id = touch.identifier;
           touches.f5.pressed = true;
@@ -67,6 +74,9 @@
       } else if (id == touches.f5.id) {
         touches.f5.id = -1;
         touches.f5.pressed = false;
+      } else if (id == touches.f4.id) {
+        touches.f4.id = -1;
+        touches.f4.pressed = false;
       } else if (id == touches.axes.id) {
         touches.axes.id = -1;
         touchbits |= 0x0f;
@@ -305,6 +315,8 @@
     var touch = 0;
     if (group == 0 && touches.esc.pressed)
       touch |= (1 << 1);
+    if (group == 12 && touches.f4.pressed)
+      touch |= (1 << 6);
     if (group == 12 && touches.f5.pressed)
       touch |= (1 << 7);
     return keyStates[group] | touch;
@@ -488,6 +500,7 @@
   };
 
   var bg = new Array(64 * 64);
+  var bgscrX = 0;
   var bgscrY = 0;
   var bgtext =
       '_________________________@______' +  // 0x00-0x1F
@@ -514,8 +527,6 @@
       var style = styleW;
       var font = fontA;
       var ix = i % 64;
-      if (ix >= 32)
-        continue;
       var iy = (i / 64) | 0;
       var id = bg[i].id;
       if (id == 1)
@@ -559,7 +570,7 @@
             break;
         }
       }
-      var x = ix * scaleX + offsetX;
+      var x = (ix - bgscrX / 8) * scaleX + offsetX;
       var y = (iy - bgscrY / 8) * scaleY;
       c.font = font;
       c.fillStyle = style;
@@ -568,6 +579,7 @@
   });
 
   window.iocs_bgscrlst = function(page, x, y) {
+    bgscrX = x;
     bgscrY = y;
   };
 

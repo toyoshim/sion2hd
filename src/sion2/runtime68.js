@@ -23,6 +23,9 @@ mergeInto(LibraryManager.library, {
   jsrt_iocs_contrast: function(c) {
     iocs_contrast(c);
   },
+  jsrt_iocs_gpalet: function(index, color) {
+    magic2.palette(index, color);
+  },
   jsrt_iocs_joyget: function(id) {
     return iocs_joyget(id);
   },
@@ -37,9 +40,6 @@ mergeInto(LibraryManager.library, {
   },
   jsrt_io_graphic_data: function(page, index, color) {
     io_graphic_data(page, index, color);
-  },
-  jsrt_io_graphic_palette: function(index, color) {
-    magic2.palette(index, color);
   },
   jsrt_io_sprite_data: function(index, data) {
     io_sprite_data(index, data);

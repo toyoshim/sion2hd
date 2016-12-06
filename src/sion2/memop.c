@@ -5,11 +5,28 @@
 #include <stdlib.h>
 #include "run68.h"
 
-static  UChar graphic_palette[512];
+static  UChar graphic_palette[512] = {
+  0x00, 0x00,
+  0x52, 0x94,
+  0x00, 0x20,
+  0x00, 0x3E,
+  0x04, 0x00,
+  0x07, 0xC0,
+  0x04, 0x20,
+  0x07, 0xFE,
+  0x08, 0x00,
+  0xF8, 0x00,
+  0x80, 0x20,
+  0xF8, 0x3E,
+  0x84, 0x00,
+  0xFF, 0xC0,
+  0xAD, 0x6A,
+  0xFF, 0xFF,
+};
 
 extern void jsrt_io_graphic_data(UShort page, ULong index, UShort color);
-extern void jsrt_io_graphic_palette(UShort index, UShort color);
 extern void jsrt_io_sprite_data(ULong index, UShort data);
+extern void jsrt_iocs_gpalet(UShort index, UShort color);
 
 void run68_abort(long adr) {
   int	i;
@@ -125,6 +142,6 @@ void mem_set( long adr, long d, char size )
   if (0xE82000 <= adr && adr < 0xE82200) {  // Graphic Palette
     if (size != S_WORD || ((adr & 1) != 0))
       abort();
-    jsrt_io_graphic_palette((adr - 0xE82000) / 2, d);
+    jsrt_iocs_gpalet((adr - 0xE82000) / 2, d);
   }
 }

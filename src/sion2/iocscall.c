@@ -8,13 +8,12 @@ extern void jsrt_iocs_bgtextcl(UChar page, UShort code);
 extern void jsrt_iocs_bgtextst(UChar page, UChar x, UChar y, UShort code);
 extern int jsrt_iocs_bitsns(UChar group);
 extern void jsrt_iocs_contrast(UChar c);
+extern void jsrt_iocs_gpalet(UShort index, UShort color);
 extern int jsrt_iocs_joyget(UChar id);
 extern void jsrt_iocs_sp_on();
 extern void jsrt_iocs_sp_off();
 extern void jsrt_iocs_sp_regst(
     ULong id, ULong x, ULong y, ULong code, ULong prio);
-// FIXME: rename to jsrt_iocs_gpalet.
-extern void jsrt_io_graphic_palette(UShort index, UShort color);
 
 static void super() {
   if (!ra[1]) {
@@ -58,7 +57,8 @@ int iocs_call() {
       printf("$%06x IOCS(G_CLR_ON): ignore.\n", pc - 2);
       break;
     case 0x94:  // GPALET
-      jsrt_io_graphic_palette(rd[1], rd[2]);
+      //printf("$%06x IOCS(GPALET): %d=$%08x\n", pc - 2, rd[1], rd[2]);
+      jsrt_iocs_gpalet(rd[1], rd[2]);
       break;
     case 0xc0:  // SP_INIT
       printf("$%06x IOCS(SP_INIT): ignore.\n", pc - 2);
