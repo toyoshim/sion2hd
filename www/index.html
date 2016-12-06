@@ -59,7 +59,7 @@
           command: 'bind',
           key: address,
           value: name
-        }, document.origin);
+        }, window.location.origin);
       };
       window.zmusic_call = function(d1, d2, d3, d4, a1) {
         document.getElementById('zmusic').contentWindow.postMessage({
@@ -70,7 +70,7 @@
           d3: d3,
           d4: d4,
           a1: a1
-        }, document.origin);
+        }, window.location.origin);
       };
       document.fonts.load('10px Audiowide');
       document.fonts.load('10px \'Fira Mono\'');

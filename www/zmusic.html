@@ -1,5 +1,8 @@
 <!doctype html>
 <html>
+  <head>
+    <meta charset="utf-8">
+  </head>
   <body>
     <script type='text/javascript'>
       var audioContext = new AudioContext();
@@ -13,6 +16,8 @@
       var zmusicReady = false;
       var zmusicBufferReady = false;
       var zmusicUpdate = function () {
+        if (zmusicBufferReady)
+          return;
         var work = Module._zmusic_update();
         var index = work >> 1;
         var s16 = Module.HEAP16;
@@ -52,7 +57,7 @@
         window.parent.postMessage({
             type: 'zmusic',
             command: 'init'
-        }, document.origin);
+        }, window.location.origin);
       };
   
       window.addEventListener('message', function(e) {
