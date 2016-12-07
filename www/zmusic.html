@@ -46,19 +46,23 @@
         if (zmusicReady && document.visibilityState == "visible")
           setTimeout(zmusicUpdate, 0);
       }, false);
-      var reverb = audioContext.createConvolver();
-      reverb.xhr = new XMLHttpRequest();
-      reverb.xhr.open("GET", "ir.wav", true);
-      reverb.xhr.responseType = "arraybuffer";
-      reverb.xhr.addEventListener('load', function() {
-        audioContext.decodeAudioData(reverb.xhr.response, function(buffer) {
-          reverb.buffer = buffer;
+      if (navigator.userAgent.indexOf("Android") == -1 &&
+          navigator.userAgent.indexOf("iPad") == -1 &&
+          navigator.userAgent.indexOf("iPhone") == -1) {
+        console.info('Enable reverb!');
+        var reverb = audioContext.createConvolver();
+        reverb.xhr = new XMLHttpRequest();
+        reverb.xhr.open("GET", "ir.wav", true);
+        reverb.xhr.responseType = "arraybuffer";
+        reverb.xhr.addEventListener('load', function() {
+          audioContext.decodeAudioData(reverb.xhr.response, function(buffer) {
+            reverb.buffer = buffer;
+          });
         });
-      });
-      reverb.xhr.send();
-
+        reverb.xhr.send();
+        scriptProcessor.connect(reverb).connect(audioContext.destination);
+      }
       scriptProcessor.connect(audioContext.destination);
-      scriptProcessor.connect(reverb).connect(audioContext.destination);
 
       var zmdTable = {};
 
