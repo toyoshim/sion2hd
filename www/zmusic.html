@@ -46,7 +46,19 @@
         if (zmusicReady && document.visibilityState == "visible")
           setTimeout(zmusicUpdate, 0);
       }, false);
+      var reverb = audioContext.createConvolver();
+      reverb.xhr = new XMLHttpRequest();
+      reverb.xhr.open("GET", "ir.wav", true);
+      reverb.xhr.responseType = "arraybuffer";
+      reverb.xhr.addEventListener('load', function() {
+        audioContext.decodeAudioData(reverb.xhr.response, function(buffer) {
+          reverb.buffer = buffer;
+        });
+      });
+      reverb.xhr.send();
+
       scriptProcessor.connect(audioContext.destination);
+      scriptProcessor.connect(reverb).connect(audioContext.destination);
 
       var zmdTable = {};
 
