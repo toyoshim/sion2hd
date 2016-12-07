@@ -126,3 +126,18 @@ extern "C" void zmusic_trap(
   while (pc && FALSE == prog_exec());
   //printf("ZMUSIC LEAVE => $%08x\n", rd[0]);
 }
+
+extern "C" int pcm8_call() {
+  switch (rd[0]) {
+    case 0x000:  // Normal play at ch.0
+      X68Sound_Pcm8_Out(0, &prog_ptr[ra[1]], rd[1], rd[2]);
+      break;
+    case 0x101:  // Abort
+      X68Sound_Pcm8_Abort();
+      break;
+    default:
+      printf("$%06x PCM8($%08x)\n", pc - 2, rd[0]);
+      break;
+  }
+  return 0;
+}

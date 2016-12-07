@@ -36,7 +36,7 @@
         var dl = e.outputBuffer.getChannelData(0);
         var dr = e.outputBuffer.getChannelData(1);
         var sl = audioBuffers[0];
-        var sr = audioBuffers[0];
+        var sr = audioBuffers[1];
         var size = audioBufferSize;
         for (var i = 0; i < size; ++i) {
           dl[i] = sl[i];

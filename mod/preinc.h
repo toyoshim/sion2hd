@@ -8,6 +8,10 @@
 #include <unistd.h>
 #include <ctype.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif  // __cplusplus
+
 #define _flushall()	fflush(NULL)
 #define _getch		getchar
 #define _getche()	putchar(getchar())
@@ -20,5 +24,11 @@ extern char *fcvt(double number, int ndigits, int *decpt, int *sign);
 extern char *gcvt(double number, int ndigits, char *buf);
 
 int	magic2_call();
+int	pcm8_call();
 int	zmusic_call();
+
+#ifdef __cplusplus
+}
+#endif  // __cplusplus
+
 /* MOD END */

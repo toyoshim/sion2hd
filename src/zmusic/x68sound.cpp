@@ -35,3 +35,11 @@ void X68Sound_OpmPoke(unsigned char data) {
 void X68Sound_OpmInt(void (CALLBACK* proc)()) {
   opm.OpmInt(proc);
 }
+
+int X68Sound_Pcm8_Out(int ch, void* adrs, int mode, int len) {
+  return opm.Pcm8_Out(ch, adrs, mode, len);
+}
+
+int X68Sound_Pcm8_Abort() {
+  return opm.Pcm8_Abort();
+}
