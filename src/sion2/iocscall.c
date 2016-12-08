@@ -3,6 +3,8 @@
 // found in the LICENSE file.
 #include "run68.h"
 
+#define fprintf(...)
+
 extern void jsrt_iocs_bgscrlst(ULong page, UShort x, UShort y);
 extern void jsrt_iocs_bgtextcl(UChar page, UShort code);
 extern void jsrt_iocs_bgtextst(UChar page, UChar x, UChar y, UShort code);
@@ -36,16 +38,16 @@ int iocs_call() {
       rd[0] = jsrt_iocs_bitsns(rd[1]);
       break;
     case 0x10:  // CRTMOD
-      printf("$%06x IOCS(CRTMOD): ignore.\n", pc - 2);
+      fprintf(stderr, "$%06x IOCS(CRTMOD): ignore.\n", pc - 2);
       break;
     case 0x11:  // CONTRAST
       if (rd[1] < 0)
-        printf("$%06x IOCS(CONTRAST): read is not impl.\n", pc - 2);
+        fprintf(stderr, "$%06x IOCS(CONTRAST): read is not impl.\n", pc - 2);
       else
         jsrt_iocs_contrast(rd[1]);
       break;
     case 0x1F:  // B_CUROFF
-      printf("$%06x IOCS(B_CUROFF): ignore.\n", pc - 2);
+      fprintf(stderr, "$%06x IOCS(B_CUROFF): ignore.\n", pc - 2);
       break;
     case 0x3b:  // JOYGET
       rd[0] = jsrt_iocs_joyget(rd[1]);
@@ -54,14 +56,14 @@ int iocs_call() {
       super();
       break;
     case 0x90:  // G_CLR_ON
-      printf("$%06x IOCS(G_CLR_ON): ignore.\n", pc - 2);
+      fprintf(stderr, "$%06x IOCS(G_CLR_ON): ignore.\n", pc - 2);
       break;
     case 0x94:  // GPALET
-      //printf("$%06x IOCS(GPALET): %d=$%08x\n", pc - 2, rd[1], rd[2]);
+      fprintf(stderr, "$%06x IOCS(GPALET): %d=$%08x\n", pc - 2, rd[1], rd[2]);
       jsrt_iocs_gpalet(rd[1], rd[2]);
       break;
     case 0xc0:  // SP_INIT
-      printf("$%06x IOCS(SP_INIT): ignore.\n", pc - 2);
+      fprintf(stderr, "$%06x IOCS(SP_INIT): ignore.\n", pc - 2);
       break;
     case 0xc1:  // SP_ON
       jsrt_iocs_sp_on();

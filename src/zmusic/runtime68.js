@@ -6,6 +6,9 @@ mergeInto(LibraryManager.library, {
   jsrt_dos_keepr: function(code) {
     zmusic_ready(code);
   },
+  jsrt_iocs_b_print: function(s) {
+    iocs_b_print(Module.Pointer_stringify(s));
+  },
   magic2_call: function(cmd_adr) {
     console.error("magic2_call: should not be called.");
     return -1;

@@ -9,6 +9,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define fprintf(...)
+
+extern void jsrt_iocs_b_print(ULong s);
+
 extern ULong zmusic_trap3;
 extern ULong zmusic_timer;
 
@@ -32,20 +36,23 @@ int iocs_call() {
     case 0x0f:    // DEFCHR
       break;
     case 0x21: {  // B_PRINT
-      printf("$%06lx IOCS(B_PRINT): %s", (ULong)(pc - 2), &prog_ptr[ra[1]]);
+      fprintf(stderr, "$%06lx IOCS(B_PRINT): %s", (ULong)(pc - 2),
+          &prog_ptr[ra[1]]);
+      jsrt_iocs_b_print(&prog_ptr[ra[1]]);
       size_t len = strlen(&prog_ptr[ra[1]]);
       ra[1] += len + 1;
       break;
     }
     case 0x60:    // ADPCMOUT
-      printf("$%06lx IOCS(ADPCMOUT): ignore.\n", (ULong)(pc - 2));
+      fprintf(stderr, "$%06lx IOCS(ADPCMOUT): ignore.\n", (ULong)(pc - 2));
       break;
     case 0x6a:    // OPMINTST
-      printf("$%06lx IOCS(OPMINST): adr=$%08lx.\n", (ULong)(pc - 2), ra[1]);
+      fprintf(stderr, "$%06lx IOCS(OPMINST): adr=$%08lx.\n", (ULong)(pc - 2),
+          ra[1]);
       zmusic_timer = ra[1];
       break;
     case 0x80:    // B_INTVCS
-      printf("$%06lx IOCS(B_INTVCS): vec=$%04lx, adr=$%08lx.\n",
+      fprintf(stderr, "$%06lx IOCS(B_INTVCS): vec=$%04lx, adr=$%08lx.\n",
           (ULong)(pc - 2), rd[1] & 0xffff, ra[1]);
       switch (rd[1] & 0xffff) {
         case 0x0023:  // Trap #3 vector
@@ -56,7 +63,7 @@ int iocs_call() {
           rd[0] = 0x00ff0000;
           break;
         default:
-          printf("  unknown vector\n");
+          fprintf(stderr, "  unknown vector\n");
           rd[0] = 0x00ff0000;
           break;
       }
@@ -71,7 +78,8 @@ int iocs_call() {
       int dmode = mode & 3;
       int sdiff = (smode == 1) ? 1 : (smode == 2) ? -1 : 0;
       int ddiff = (dmode == 1) ? 1 : (dmode == 2) ? -1 : 0;
-      printf("$%06lx IOCS(DMAMOVE): mode=%02x, len=%08x, src=%08x, dst=%08x.\n",
+      fprintf(stderr,
+          "$%06lx IOCS(DMAMOVE): mode=%02x, len=%08x, src=%08x, dst=%08x.\n",
           (ULong)(pc - 2), mode, rd[2], ra[1], ra[2]);
       for (i = 0; i < rd[2]; ++i) {
         prog_ptr[ra[2]] = prog_ptr[ra[1]];

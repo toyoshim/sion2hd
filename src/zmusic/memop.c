@@ -11,7 +11,7 @@ extern void zmusic_set_val(UChar val);
 
 void run68_abort(long adr) {
   int	i;
-  printf("*ABORT*");
+  printf("*ABORT*\n");
   printf("d0-7=%08lx", rd[0]);
   for (i = 1; i < 8; i++)
     printf(",%08lx", rd[i]);

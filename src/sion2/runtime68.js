@@ -50,8 +50,8 @@ mergeInto(LibraryManager.library, {
       s.push(String.fromCharCode(Module.HEAPU8[i]));
     zmusic_bind(address, s.join(''));
   },
-  jsrt_zmusic_call: function(d1, d2, d3, d4, a1) {
-    zmusic_call(d1, d2, d3, d4, a1);
+  jsrt_zmusic_call: function(base, d1, d2, d3, d4, a1) {
+    zmusic_call(base, d1, d2, d3, d4, a1);
   },
   pcm8_call: function() {
     console.error("pcm8_call: should not be called.");

@@ -65,9 +65,13 @@
       scriptProcessor.connect(audioContext.destination);
 
       var zmdTable = {};
+      var seTable = {};
+      var zwkAddress = 0;
+      var seOffset = 0x0F0000;
 
       window.zmusic_ready = function (code) {
-        Module._zmusic_init(audioContext.sampleRate, audioBufferSize);
+        zwkAddress =
+            Module._zmusic_init(audioContext.sampleRate, audioBufferSize);
         zmusicReady = true;
         console.info('A ♪SOUND mind in a SOUND iframe.');
         window.parent.postMessage({
@@ -88,13 +92,44 @@
           };
         } else if (e.data.command == 'trap') {
           var d = e.data;
-          var zmd = zmdTable[d.a1];
-          if (zmd)
-            console.log('ZMD:', zmd.name);
-          var data = zmd ? zmd.data : null;
+          var data = null;
+          if (d.d1 == 0x11) {
+            var zmd = zmdTable[d.a1];
+            if (zmd) {
+              console.log('ZMD:', zmd.name);
+              data = zmd.data;
+            }
+          } else if (d.d1 == 0x12) {
+            if (d.data) {
+              for (var i = 0; i < d.data.byteLength; ++i)
+                Module.HEAPU8[zwkAddress + seOffset + i] = d.data[i];
+              seTable[d.a1] = 0x100000 + seOffset;
+              seOffset += d.data.byteLength;
+            }
+            d.a1 = seTable[d.a1];
+          }
           Module._zmusic_trap(d.d1, d.d2, d.d3, d.d4, d.a1, data);
         }
       }, false);
+
+      var bPrintBuffer = '';
+      var bRe = /\x1b\[\d\d\x6d/g;
+      var bEscape = function(s) {
+        var code = [];
+        s = s.replace(/\ubb9b[^{\udedb]+\udedb\x33\x33\x6d/,
+            'Z-mu$iC version 1.10');
+        s = s.replace(/\udff6\udfc1/, '・A');
+        s = s.replace('PCM8.X (C)H.ETOH', 'X68Sound');
+        var rs = s.replace(bRe, '');
+        return rs;
+      };
+      window.iocs_b_print = function(s) {
+        bPrintBuffer += s;
+        var lines = bPrintBuffer.split('\n');
+        for (var i = 0; i < lines.length - 1; ++i)
+          console.info(bEscape(lines[i]));
+        bPrintBuffer = lines[lines.length - 1];
+      };
 
       var Module = {
         arguments: [
@@ -107,15 +142,11 @@
             '-swww/sion2/NEIRO.ZMS'
         ],
         print: function(text) {
-          if (!zmusicReady)
-            return;
           if (arguments.length > 1)
             text = Array.prototype.slice.call(arguments).join('\n');
           console.warn(text);
         },
         printErr: function(text) {
-          if (!zmusicReady)
-            return;
           if (arguments.length > 1)
             text = Array.prototype.slice.call(arguments).join('\n');
           console.error(text);

@@ -3,16 +3,14 @@
 // found in the LICENSE file.
 #include "run68.h"
 
-extern jsrt_zmusic_call(ULong d1, ULong d2, ULong d3, ULong d4, ULong a1);
+extern jsrt_zmusic_call(
+    ULong base, ULong d1, ULong d2, ULong d3, ULong d4, ULong a1);
 
 int zmusic_call() {
   rd[0] = 0;
   switch (rd[1]) {
     case 0x00:  // M_INIT
       //printf("$%06x ZMUSIC(M_INIT)\n", pc - 2);
-      break;
-    case 0x06:  // M_TRK
-      //printf("$%06x ZMUSIC(M_TRK); track=$%08x, mml=$%08x\n", pc - 2, rd[2], ra[1]);
       break;
     case 0x08:  // M_PLAY
       //printf("$%06x ZMUSIC(M_PLAY); d2=$%08x, d3=$%08x, d4=$08x\n", pc - 2,
@@ -41,6 +39,6 @@ int zmusic_call() {
       printf("$%06x ZMUSIC($%08x)\n", pc - 2, rd[1]);
       return -1;
   }
-  jsrt_zmusic_call(rd[1], rd[2], rd[3], rd[4], ra[1]);
+  jsrt_zmusic_call(prog_ptr, rd[1], rd[2], rd[3], rd[4], ra[1]);
   return 0;
 }

@@ -53,6 +53,7 @@
           }
         }, false);
       });
+      var zmusicSentBuffer = {};
       window.zmusic_bind = function(address, name) {
         document.getElementById('zmusic').contentWindow.postMessage({
           type: 'zmusic',
@@ -61,7 +62,15 @@
           value: name
         }, window.location.origin);
       };
-      window.zmusic_call = function(d1, d2, d3, d4, a1) {
+      window.zmusic_call = function(base, d1, d2, d3, d4, a1) {
+        var data = null;
+        if (d1 == 0x12 && !zmusicSentBuffer[a1]) {
+          zmusicSentBuffer[a1] = true;
+          var size = 256;
+          data = new Uint8Array(size);
+          for (var i = 0; i < size; ++i)
+            data[i] = Module.HEAPU8[base + a1 + i];
+        }
         document.getElementById('zmusic').contentWindow.postMessage({
           type: 'zmusic',
           command: 'trap',
@@ -69,7 +78,8 @@
           d2: d2,
           d3: d3,
           d4: d4,
-          a1: a1
+          a1: a1,
+          data: data
         }, window.location.origin);
       };
       document.fonts.load('10px Audiowide');

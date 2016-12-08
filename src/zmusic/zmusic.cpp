@@ -43,7 +43,7 @@ void zmusic_timerb() {
 
 }  // namespace
 
-extern "C" void zmusic_init(int rate, int count) {
+extern "C" char* zmusic_init(int rate, int count) {
   X68Sound_StartPcm(rate);
   zmusic_work = (char*)malloc(0x100000);
   opm_count = count;
@@ -53,6 +53,7 @@ extern "C" void zmusic_init(int rate, int count) {
     X68Sound_OpmPoke(preset[i].val);
   }
   X68Sound_OpmInt(zmusic_timerb);
+  return zmusic_work;
 }
 
 extern "C" void zmusic_set_reg(UChar reg) {
@@ -88,16 +89,12 @@ extern "C" short* zmusic_update() {
 }
 
 extern "C" void zmusic_trap(
-    ULong d1, ULong d2, ULong d3, ULong d4, ULong a1, const char* filename) {
+    ULong d1, ULong d2, ULong d3, ULong d4, ULong a1, const char* data) {
   //printf("ZMUSIC ENTER: d1=$%08x, d2=$%08x, d3=$%08x, d4=$%08x, a1=$%08x(%s)\n",
-  //    d1, d2, d3, d4, a1, filename);
-  if (d1 == 0x06 || d1 == 0x08 || d1 == 0x12 || d1 == 0x14) {
-    // Should be modified to work over RPC.
-    return;
-  }
+  //    d1, d2, d3, d4, a1, data);
   if (d1 == 0x11) {
     // PLAY_CNV_DATA
-    int fd = open(filename, O_RDONLY);
+    int fd = open(data, O_RDONLY);
     if (fd < 0) {
       printf("ZMUSIC CNV_DATA: file open error\n");
       return;
@@ -128,11 +125,12 @@ extern "C" void zmusic_trap(
 }
 
 extern "C" int pcm8_call() {
-  switch (rd[0]) {
+  switch (rd[0] & 0xffff) {
     case 0x000:  // Normal play at ch.0
       X68Sound_Pcm8_Out(0, &prog_ptr[ra[1]], rd[1], rd[2]);
       break;
-    case 0x101:  // Abort
+    case 0x100:  // Stop
+    case 0x101:  // Pause
       X68Sound_Pcm8_Abort();
       break;
     default:
