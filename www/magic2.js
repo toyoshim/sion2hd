@@ -201,8 +201,8 @@ class Magic2 {
     }
     this[_].data.lct = mem_read_u16be(memory, addr);
     addr += 2;
-    if (this[_].color) {
-      this[_].data.color = mem_read_u16be(memory, addr);
+    if (this[_].cext) {
+      this[_].data.color = mem_read_u16be(memory, addr) & 0x0f;
       addr += 2;
     } else {
       this[_].data.color = this[_].color;

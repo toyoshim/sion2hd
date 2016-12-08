@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include "run68.h"
 
-static  UChar graphic_palette[512] = {
+UChar graphic_palette[512] = {
   0x00, 0x00,
   0x52, 0x94,
   0x00, 0x20,

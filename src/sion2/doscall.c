@@ -8,6 +8,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define fprintf(...)
+
 extern void jsrt_zmusic_bind(ULong addr, char* filename);
 
 static void super() {
@@ -45,7 +47,7 @@ static const int kZmdFd = 130;
 int dos_call(UChar code) {
   switch (code) {
     case 0x0C:    // KFLUSH
-      printf("$%06x FUNC(KFLUSH): ignore.\n", pc - 2);
+      fprintf(stderr, "$%06x FUNC(KFLUSH): ignore.\n", pc - 2);
       rd[0] = 0;
       break;
     case 0x20:    // SUPER
@@ -62,14 +64,15 @@ int dos_call(UChar code) {
         rd[0] = kDatFd;  // Returns a MAGIC fd.
       else 
         rd[0] = kZmdFd;  // Returns a MAGIC fd for ZMD.
-      //printf("$%06x FUNC(OPEN); file=%s, mode=$%04x => $%08x.\n", pc - 2,
-      //    &prog_ptr[nameptr], mode, rd[0]);
+      fprintf(stderr, "$%06x FUNC(OPEN); file=%s, mode=$%04x => $%08x.\n",
+          pc - 2, &prog_ptr[nameptr], mode, rd[0]);
       break;
     }
     case 0x3E: {  // CLOSE
       UShort fileno = mem_get(ra[7], S_WORD);
       rd[0] = 0;
-      //printf("$%06x FUNC(CLOSE); fd=$%04x => $%08x.\n", pc - 2, fileno, rd[0]);
+      fprintf(stderr, "$%06x FUNC(CLOSE); fd=$%04x => $%08x.\n", pc - 2, fileno,
+          rd[0]);
       break;
     }
     case 0x3F: {  // READ
@@ -82,8 +85,9 @@ int dos_call(UChar code) {
         rd[0] = 0;
       if (fileno == kZmdFd)
         jsrt_zmusic_bind(buffer + 7, lastOpenedFilename);
-      //printf("$%06x FUNC(READ); fd=$%04x, buffer=$%08x, len=$%08x => $%08x.\n",
-      //    pc - 2, fileno, buffer, len, rd[0]);
+      fprintf(stderr,
+          "$%06x FUNC(READ); fd=$%04x, buffer=$%08x, len=$%08x => $%08x.\n",
+          pc - 2, fileno, buffer, len, rd[0]);
       break;
     }
     case 0x42: {  // SEEK
@@ -94,8 +98,9 @@ int dos_call(UChar code) {
         rd[0] = 16;
       else
         rd[0] = 0;
-      //printf("$%06x FUNC(SEEK); fd=$%04x, offset=$%08x, mode=$%04x => $%08x.\n",
-      //    pc - 2, fileno, offset, mode, rd[0]);
+      fprintf(stderr,
+          "$%06x FUNC(SEEK); fd=$%04x, offset=$%08x, mode=$%04x => $%08x.\n",
+          pc - 2, fileno, offset, mode, rd[0]);
       break;
     }
     default:

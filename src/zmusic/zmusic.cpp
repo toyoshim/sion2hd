@@ -133,6 +133,8 @@ extern "C" int pcm8_call() {
     case 0x101:  // Pause
       X68Sound_Pcm8_Abort();
       break;
+    case 0x1FE:  // Lock
+      break;
     default:
       printf("$%06x PCM8($%08x)\n", pc - 2, rd[0]);
       break;

@@ -17,6 +17,8 @@ extern void jsrt_iocs_sp_off();
 extern void jsrt_iocs_sp_regst(
     ULong id, ULong x, ULong y, ULong code, ULong prio);
 
+extern UChar graphic_palette[512];
+
 static void super() {
   if (!ra[1]) {
     // to SUPER
@@ -60,6 +62,8 @@ int iocs_call() {
       break;
     case 0x94:  // GPALET
       fprintf(stderr, "$%06x IOCS(GPALET): %d=$%08x\n", pc - 2, rd[1], rd[2]);
+      graphic_palette[rd[1] * 2 + 0] = rd[2] >> 8;
+      graphic_palette[rd[1] * 2 + 1] = rd[2];
       jsrt_iocs_gpalet(rd[1], rd[2]);
       break;
     case 0xc0:  // SP_INIT
@@ -76,6 +80,9 @@ int iocs_call() {
       break;
     case 0xc8:  // BGSCRLST
       jsrt_iocs_bgscrlst(rd[1], rd[2], rd[3]);
+      break;
+    case 0xca:  // BGCTRLST
+      fprintf(stderr, "$%06x IOCS(BGCTLST): ignore.\n", pc - 2);
       break;
     case 0xcc:  // BGTEXTCL
       jsrt_iocs_bgtextcl(rd[1], rd[2]);
