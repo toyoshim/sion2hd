@@ -133,6 +133,32 @@
   }, false);
 
   var keyStates = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  var keyRepeatStates = [];
+
+  var emulateKeyRepeat = function(group, status) {
+    if (!keyRepeatStates[group])
+      keyRepeatStates[group] = [
+        { pressed: false, count: 0 },
+        { pressed: false, count: 0 },
+        { pressed: false, count: 0 },
+        { pressed: false, count: 0 },
+        { pressed: false, count: 0 },
+        { pressed: false, count: 0 },
+        { pressed: false, count: 0 },
+        { pressed: false, count: 0 }
+    ];
+    var now = performance.now();
+    for (var i = 0; i < 8; ++i) {
+      if (!keyRepeatStates[group][i].pressed && ((status >> i) & 1) != 0)
+        keyRepeatStates[group][i].count = now;
+      keyRepeatStates[group][i].pressed = ((status >> i) & 1) != 0;
+      var count = now - keyRepeatStates[group][i].count;
+      // Mask key while 50ms.
+      if (0 < count && count < 50)
+        status &= ~(1 << i);
+    }
+    return status;
+  };
 
   var EdgeKeyToCode = function(key) {
     switch (key) {
@@ -319,7 +345,7 @@
       touch |= (1 << 6);
     if (group == 12 && touches.f5.pressed)
       touch |= (1 << 7);
-    return keyStates[group] | touch;
+    return emulateKeyRepeat(group, keyStates[group] | touch);
   };
 
   var contrast = {
