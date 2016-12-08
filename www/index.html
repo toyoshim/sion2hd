@@ -94,7 +94,11 @@
         return c.getContext('2d');
       }));
       var Module = {
-        preRun: [],
+        preRun: [function() {
+          FS.mkdir('/persistent');
+          FS.mount(IDBFS, {}, '/persistent');
+          FS.syncfs(true, function (e) {});
+        }],
         postRun: [],
         arguments: ['sion2.x'],
         print: function(text) {

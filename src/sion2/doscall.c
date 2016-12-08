@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 #include "run68.h"
 
+#include <emscripten.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -41,8 +42,7 @@ static ULong pcg_read() {
 static char* lastOpenedFilename = NULL;
 
 static const int kPcgFd = 128;
-static const int kDatFd = 129;
-static const int kZmdFd = 130;
+static const int kZmdFd = 129;
 
 int dos_call(UChar code) {
   switch (code) {
@@ -53,6 +53,17 @@ int dos_call(UChar code) {
     case 0x20:    // SUPER
       super();
       break;
+    case 0x3C: {  // CREATE
+      ULong nameptr = mem_get(ra[7], S_LONG);
+      UShort atr = mem_get(ra[7] + 4, S_WORD);
+      if (!strcmp(&prog_ptr[nameptr], "HI_SCORE.DAT")) {
+        rd[0] = open("/persistent/HI_SCORE.DAT", O_RDWR | O_CREAT, 0777);
+      } else
+        rd[0] = -1;
+      fprintf(stderr, "$%06x FUNC(CREATE): file=%s, atr=$%04x => $%08x.\n",
+          pc - 2, &prog_ptr[nameptr], atr, rd[0]);
+      break;
+    }
     case 0x3D: {  // OPEN
       ULong nameptr = mem_get(ra[7], S_LONG);
       UShort mode = mem_get(ra[7] + 4, S_WORD);
@@ -61,7 +72,7 @@ int dos_call(UChar code) {
       if (!strcmp(&prog_ptr[nameptr], "sion2_pcg.SPD"))
         rd[0] = kPcgFd;  // Returns a MAGIC fd.
       else if (!strcmp(&prog_ptr[nameptr], "HI_SCORE.DAT"))
-        rd[0] = kDatFd;  // Returns a MAGIC fd.
+        rd[0] = open("/persistent/HI_SCORE.DAT", O_RDWR | O_CREAT, 0777);
       else 
         rd[0] = kZmdFd;  // Returns a MAGIC fd for ZMD.
       fprintf(stderr, "$%06x FUNC(OPEN); file=%s, mode=$%04x => $%08x.\n",
@@ -70,7 +81,10 @@ int dos_call(UChar code) {
     }
     case 0x3E: {  // CLOSE
       UShort fileno = mem_get(ra[7], S_WORD);
-      rd[0] = 0;
+      if (fileno != kPcgFd && fileno != kZmdFd)
+        rd[0] = close(fileno);
+      else
+        rd[0] = 0;
       fprintf(stderr, "$%06x FUNC(CLOSE); fd=$%04x => $%08x.\n", pc - 2, fileno,
           rd[0]);
       break;
@@ -81,12 +95,27 @@ int dos_call(UChar code) {
       ULong len = mem_get(ra[7] + 6, S_LONG);
       if (fileno == kPcgFd)
         rd[0] = pcg_read();
-      else
+      else if (fileno == kZmdFd)
         rd[0] = 0;
+      else
+        rd[0] = read(fileno, &prog_ptr[buffer], len);
       if (fileno == kZmdFd)
         jsrt_zmusic_bind(buffer + 7, lastOpenedFilename);
       fprintf(stderr,
           "$%06x FUNC(READ); fd=$%04x, buffer=$%08x, len=$%08x => $%08x.\n",
+          pc - 2, fileno, buffer, len, rd[0]);
+      break;
+    }
+    case 0x40: {  // WRITE
+      UShort fileno = mem_get(ra[7], S_WORD);
+      ULong buffer = mem_get(ra[7] + 2, S_LONG);
+      ULong len = mem_get(ra[7] + 6, S_LONG);
+      if (fileno != kPcgFd && fileno != kZmdFd) {
+        rd[0] = write(fileno, &prog_ptr[buffer], len);
+        EM_ASM(FS.syncfs(false, function(){}));
+      }
+      fprintf(stderr,
+          "$%06x FUNC(WRITE); fd=$%04x, buffer=$%08x, len=$%08x => $%08x.\n",
           pc - 2, fileno, buffer, len, rd[0]);
       break;
     }
@@ -96,8 +125,10 @@ int dos_call(UChar code) {
       UShort mode = mem_get(ra[7] + 6, S_WORD);
       if (fileno == kZmdFd)
         rd[0] = 16;
-      else
+      else if (fileno == kPcgFd)
         rd[0] = 0;
+      else
+        rd[0] = lseek(fileno, offset, mode);
       fprintf(stderr,
           "$%06x FUNC(SEEK); fd=$%04x, offset=$%08x, mode=$%04x => $%08x.\n",
           pc - 2, fileno, offset, mode, rd[0]);
