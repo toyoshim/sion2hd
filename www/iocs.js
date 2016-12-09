@@ -525,9 +525,7 @@
     }
   };
 
-  var bg = new Array(64 * 64);
-  var bgscrX = 0;
-  var bgscrY = 0;
+  var bg = [null, null];
   var bgtext =
       '_________________________@______' +  // 0x00-0x1F
       " !'#$%&#()*+,-./0123456789:;<=>?" +  // 0x20-0x3F
@@ -538,17 +536,18 @@
       '________________________________' +  // 0xC0-0xDF
       '________________________________';    // 0xE0-0xFF
 
-  magic2.vsync(function(c) {
+  var bgUpdate = function(c, page) {
     var scaleX = c.canvas.height / 256 * 4 / 3 * 8;
     var scaleY = c.canvas.height / 256 * 8;
     var offsetX = (c.canvas.width - c.canvas.height * 4 / 3) / 2;
     c.textAlign = 'center';
     c.textBaseline = 'middle';
-    var styleW = 'rgba(255, 255, 255, 1.0)';
+    var styleW = page.fg;
     var styleB = 'rgba(0, 255, 255, 0.5)';
     var styleR = 'rgba(255, 0, 0, 0.5)';
     var fontA = scaleY + 'px \'Audiowide\'';
     var fontF = scaleY + 'px \'Fira Mono\'';
+    var bg = page.pattern;
     for (var i = 0; i < bg.length; ++i) {
       var style = styleW;
       var font = fontA;
@@ -596,27 +595,41 @@
             break;
         }
       }
-      var x = (ix - bgscrX / 8) * scaleX + offsetX;
-      var y = (iy - bgscrY / 8) * scaleY;
+      var x = (ix - page.scroll.x / 8) * scaleX + offsetX;
+      var y = (iy - page.scroll.y / 8) * scaleY;
       c.font = font;
       c.fillStyle = style;
       c.fillText(chr, x + scaleX / 2, y + scaleY / 2, scaleX);
     }
+  };
+
+  magic2.vsync(function(c) {
+    bgUpdate(c, bg[0]);
   });
 
   window.iocs_bgscrlst = function(page, x, y) {
-    bgscrX = x;
-    bgscrY = y;
+    page &= 1;
+    console.log(page, x, y);
+    bg[page].scroll.x = x;
+    bg[page].scroll.y = y;
   };
 
   window.iocs_bgtextcl = function(page, code) {
-    if (page != 0)
-      console.error('Only BG 0 is supported.');
+    page &= 1;
+    bg[page] = {
+      fg: 'rgba(255, 255, 255, 1.0)',
+      pattern: new Array(64 * 64),
+      scroll: {
+        x: 0,
+        y: 0
+      }
+    };
     var id = code & 0xff;
     var flipX = (code & 0x4000) != 0;
     var flipY = (code & 0x8000) != 0;
-    for (var i = 0; i < bg.length; ++i) {
-      bg[i] = {
+    var pattern = bg[page].pattern;
+    for (var i = 0; i < pattern.length; ++i) {
+      pattern[i] = {
         id: id,
         flipX: flipX,
         flipY: flipY
@@ -624,16 +637,17 @@
     }
   };
   window.iocs_bgtextcl(0, 0);
+  window.iocs_bgtextcl(1, 0);
 
   window.iocs_bgtextst = function(page, x, y, code) {
-    if (page != 0)
-      console.error('Only BG 0 is supported.');
+    page &= 1;
     var index = (y & 0x3f) * 64 + (x & 0x3f);
     var id = code & 0xff;
     var flipX = (code & 0x4000) != 0;
     var flipY = (code & 0x8000) != 0;
-    bg[index].id = id;
-    bg[index].flipX = flipX;
-    bg[index].flipY = flipY;
+    var pattern = bg[page].pattern;
+    pattern[index].id = id;
+    pattern[index].flipX = flipX;
+    pattern[index].flipY = flipY;
   };
 })();

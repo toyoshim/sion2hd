@@ -112,7 +112,7 @@
   var pal = 0;
   var data = new Array(4 * 6);
   
-  var c = document.getElementById('canvas2').getContext('2d');
+  var c = document.getElementById('graphic2').getContext('2d');
   var scaleX = c.canvas.height / 256 * 4 / 3;
   var scaleY = c.canvas.height / 256;
   var offsetX = (c.canvas.width - c.canvas.height * 4 / 3) / 2;
