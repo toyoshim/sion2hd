@@ -121,11 +121,27 @@
           document.fonts.ready.then(function() {
             Module.removeRunDependency("fonts");
           });
+          config.onupdate = function() {
+            document.getElementById('zmusic').contentWindow.postMessage({
+              type: 'zmusic',
+              command: 'config',
+              emulation: config.useSound(),
+              reverb: config.useReverb()
+            }, window.location.origin);
+          };
+          Module.addRunDependency("config");
+          config.ready.then(function() {
+            Module.removeRunDependency("config");
+            config.onupdate();
+          });
         }
       };
     </script>
-    <script type="text/javascript" charset="UTF-8" src="iocs.js"></script>
-    <script type="text/javascript" charset="UTF-8" src="io.js"></script>
-    <script type="text/javascript" charset="ShiftJIS" src="sion2.js"></script>
+    <script defer type="text/javascript" charset="UTF-8" src="iocs.js"></script>
+    <script defer type="text/javascript" charset="UTF-8" src="io.js"></script>
+    <script defer type="text/javascript" charset="UTF-8" src="config.js">
+    </script>
+    <script defer type="text/javascript" charset="ShiftJIS" src="sion2.js">
+    </script>
   </body>
 </html>

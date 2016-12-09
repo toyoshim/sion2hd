@@ -46,23 +46,16 @@
         if (zmusicReady && document.visibilityState == "visible")
           setTimeout(zmusicUpdate, 0);
       }, false);
-      if (navigator.userAgent.indexOf("Android") == -1 &&
-          navigator.userAgent.indexOf("iPad") == -1 &&
-          navigator.userAgent.indexOf("iPhone") == -1) {
-        console.info('Enable reverb!');
-        var reverb = audioContext.createConvolver();
-        reverb.xhr = new XMLHttpRequest();
-        reverb.xhr.open("GET", "ir.wav", true);
-        reverb.xhr.responseType = "arraybuffer";
-        reverb.xhr.addEventListener('load', function() {
-          audioContext.decodeAudioData(reverb.xhr.response, function(buffer) {
-            reverb.buffer = buffer;
-          });
+      var reverb = audioContext.createConvolver();
+      reverb.xhr = new XMLHttpRequest();
+      reverb.xhr.open("GET", "ir.wav", true);
+      reverb.xhr.responseType = "arraybuffer";
+      reverb.xhr.addEventListener('load', function() {
+        audioContext.decodeAudioData(reverb.xhr.response, function(buffer) {
+          reverb.buffer = buffer;
         });
-        reverb.xhr.send();
-        scriptProcessor.connect(reverb).connect(audioContext.destination);
-      }
-      scriptProcessor.connect(audioContext.destination);
+      });
+      reverb.xhr.send();
 
       var zmdTable = {};
       var seTable = {};
@@ -109,6 +102,14 @@
             d.a1 = seTable[d.a1];
           }
           Module._zmusic_trap(d.d1, d.d2, d.d3, d.d4, d.a1, data);
+        } else if (e.data.command == 'config') {
+          scriptProcessor.disconnect();
+          reverb.disconnect();
+          if (e.data.emulation) {
+            scriptProcessor.connect(audioContext.destination);
+            if (e.data.reverb)
+              scriptProcessor.connect(reverb).connect(audioContext.destination);
+          }
         }
       }, false);
 

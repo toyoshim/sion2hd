@@ -4,6 +4,7 @@
 
 /* global magic2 */
 /* global navigator */
+/* global performance */
 (function() {
   var touchbits = 0xff;
   var touches = {
@@ -157,6 +158,9 @@
       if (0 < count && count < 50)
         status &= ~(1 << i);
     }
+    // Mask ESC key to hook for native configuration.
+    if (group == 0)
+      return status & ~(1 << 1);
     return status;
   };
 
@@ -337,7 +341,7 @@
     }
   }, false);
 
-  window.iocs_bitsns = function(group) {
+  window.iocs_bitsns = function(group, raw) {
     var touch = 0;
     if (group == 0 && touches.esc.pressed)
       touch |= (1 << 1);
@@ -345,7 +349,10 @@
       touch |= (1 << 6);
     if (group == 12 && touches.f5.pressed)
       touch |= (1 << 7);
-    return emulateKeyRepeat(group, keyStates[group] | touch);
+    var rawStatus = keyStates[group] | touch;
+    if (raw)
+      return rawStatus;
+    return emulateKeyRepeat(group, rawStatus);
   };
 
   var contrast = {
@@ -366,7 +373,8 @@
       contrast.now--;
     var canvas = document.getElementsByTagName('canvas');
     Array.prototype.map.call(canvas, function (c) {
-      c.style.opacity = contrast.now / 15;
+      if (c.id != 'bg2')
+        c.style.opacity = contrast.now / 15;
     });
   });
 
@@ -534,26 +542,26 @@
       '________________________________' +  // 0x80-0x9F
       '________________________________' +  // 0xA0-0xBF
       '________________________________' +  // 0xC0-0xDF
-      '________________________________';    // 0xE0-0xFF
+      '________________________________';   // 0xE0-0xFF
 
-  var bgUpdate = function(c, page) {
+  window.bg_update = function(c, page) {
     var scaleX = c.canvas.height / 256 * 4 / 3 * 8;
     var scaleY = c.canvas.height / 256 * 8;
     var offsetX = (c.canvas.width - c.canvas.height * 4 / 3) / 2;
     c.textAlign = 'center';
     c.textBaseline = 'middle';
-    var styleW = page.fg;
+    var styleW = bg[page].fg;
     var styleB = 'rgba(0, 255, 255, 0.5)';
     var styleR = 'rgba(255, 0, 0, 0.5)';
     var fontA = scaleY + 'px \'Audiowide\'';
     var fontF = scaleY + 'px \'Fira Mono\'';
-    var bg = page.pattern;
-    for (var i = 0; i < bg.length; ++i) {
+    var pattern = bg[page].pattern;
+    for (var i = 0; i < pattern.length; ++i) {
       var style = styleW;
       var font = fontA;
       var ix = i % 64;
       var iy = (i / 64) | 0;
-      var id = bg[i].id;
+      var id = pattern[i].id;
       if (id == 1)
         continue;
       var chr = bgtext[id];
@@ -595,21 +603,21 @@
             break;
         }
       }
-      var x = (ix - page.scroll.x / 8) * scaleX + offsetX;
-      var y = (iy - page.scroll.y / 8) * scaleY;
+      var x = (ix - bg[page].scroll.x / 8) * scaleX + offsetX;
+      var y = (iy - bg[page].scroll.y / 8) * scaleY;
       c.font = font;
       c.fillStyle = style;
       c.fillText(chr, x + scaleX / 2, y + scaleY / 2, scaleX);
     }
   };
 
+  // TODO: Not to draw on each frame, but use a dedicated canvas.
   magic2.vsync(function(c) {
-    bgUpdate(c, bg[0]);
+    window.bg_update(c, 0);
   });
 
   window.iocs_bgscrlst = function(page, x, y) {
     page &= 1;
-    console.log(page, x, y);
     bg[page].scroll.x = x;
     bg[page].scroll.y = y;
   };
@@ -636,8 +644,8 @@
       };
     }
   };
-  window.iocs_bgtextcl(0, 0);
-  window.iocs_bgtextcl(1, 0);
+  window.iocs_bgtextcl(0, 1);
+  window.iocs_bgtextcl(1, 1);
 
   window.iocs_bgtextst = function(page, x, y, code) {
     page &= 1;
