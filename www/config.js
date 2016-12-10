@@ -46,6 +46,8 @@ var draw = function() {
   window.bg_update(context, 1);
 };
 
+var keys = { up: false, down: false, left: false, right: false };
+
 var update = function() {
   requestAnimationFrame(update);
   if (!window.config.shown && opacity != 0) {
@@ -66,11 +68,22 @@ var update = function() {
   if (!window.config.shown)
     return;
 
-  var key7 = window.iocs_bitsns(7);
+  var key7 = window.iocs_bitsns(7, true);
   var up = 0 != (key7 & (1 << 4));
   var down = 0 != (key7 & (1 << 6));
   var left = 0 != (key7 & (1 << 3));
   var right = 0 != (key7 & (1 << 5));
+  var joy = window.iocs_joyget(0);
+  up |= (joy & 0x01) == 0;
+  down |= (joy & 0x02) == 0;
+  left |= (joy & 0x04) == 0;
+  right |= (joy & 0x08) == 0;
+  var newKeys = { up: up, down: down, left: left, right: right };
+  up &= !keys.up;
+  down &= !keys.down;
+  left &= !keys.left;
+  right &= !keys.right;
+  keys = newKeys;
   select += optionKeys.length + (up ? -1 : down ? 1 : 0);
   select %= optionKeys.length;
   var option = options[optionKeys[select]];
@@ -84,7 +97,7 @@ var update = function() {
     draw();
   if (left | right)
     window.config.onupdate();
-  if (select == 2 && window.iocs_bitsns(5) & (1 << 2))
+  if (select == 2 && (window.iocs_bitsns(5) & (1 << 2)) || (joy & 0x60) != 0x60)
     window.config.hide();
 };
 
