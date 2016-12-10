@@ -97,35 +97,45 @@ var update = function() {
     draw();
   if (left | right)
     window.config.onupdate();
-  if (select == 2 && (window.iocs_bitsns(5) & (1 << 2)) || (joy & 0x60) != 0x60)
+  if (optionKeys[select] == 'exit' &&
+      (window.iocs_bitsns(5) & (1 << 2)) || (joy & 0x60) != 0x60) {
     window.config.hide();
+  }
 };
 
 var strings = {
-  title1:  { on:  true, x: 12, y:  5, text: 'SION\x5b HD' },
-  title2:  { on:  true, x: 11, y:  7, text: '- OPTIONS -' },
-  sounds:  { on:  true, x:  9, y: 11, text: 'SOUND EMULATION' },
-  sound1:  { on:  true, x:  9, y: 13, text: '      OFF      ' },
-  sound2:  { on: false, x:  9, y: 13, text: '    X68SOUND   ' },
-  sound3:  { on: false, x:  9, y: 13, text: 'X68SOUND+REVERB' },
-  options: { on:  true, x: 10, y: 16, text: 'SKIP OPTIONS' },
-  option1: { on:  true, x: 15, y: 18, text: 'OFF' },
-  option2: { on: false, x: 15, y: 18, text: 'ON ' },
-  exit:    { on:  true, x: 14, y: 21, text: 'EXIT' },
+  title1:  { on:  true, x: 12, y:  3, text: 'SION\x5b HD' },
+  title2:  { on:  true, x: 11, y:  5, text: '- OPTIONS -' },
+  sounds:  { on:  true, x:  9, y:  8, text: 'SOUND EMULATION' },
+  sound1:  { on:  true, x:  9, y: 10, text: '      OFF      ' },
+  sound2:  { on: false, x:  9, y: 10, text: '    X68SOUND   ' },
+  sound3:  { on: false, x:  9, y: 10, text: 'X68SOUND+REVERB' },
+  speeds:  { on:  true, x: 11, y: 13, text: 'GAME SPEED' },
+  speed1:  { on:  true, x: 12, y: 15, text: ' NORMAL  ' },
+  speed2:  { on:  true, x: 12, y: 15, text: '  SLOW   ' },
+  speed3:  { on:  true, x: 12, y: 15, text: 'VERY SLOW' },
+  options: { on:  true, x: 10, y: 18, text: 'SKIP OPTIONS' },
+  option1: { on:  true, x: 15, y: 20, text: 'OFF' },
+  option2: { on: false, x: 15, y: 20, text: 'ON ' },
+  exit:    { on:  true, x: 14, y: 23, text: 'EXIT' },
   copy1:   { on:  true, x:  9, y: 28, text: '2016\x22DEC SION\x5b HD' },
   copy2:   { on:  true, x:  7, y: 29, text: 'BY TOYOSHIMA-HOUSE' },
 };
 
-var optionKeys = ['sound', 'option', 'exit'];
+var optionKeys = ['sound', 'speed', 'option', 'exit'];
 var options = {
-  sound: { y: 11, i: 0, entries: ['sound1', 'sound2', 'sound3'] },
-  option: { y: 16, i: 0, entries: ['option1', 'option2'] },
-  exit: { y: 21, i: 0, entries: [] },
+  sound: {
+    y: strings['sounds'].y, i: 0, entries: ['sound1', 'sound2', 'sound3'] },
+  speed: {
+    y: strings['speeds'].y, i: 0, entries: ['speed1', 'speed2', 'speed3'] },
+  option: { y: strings['options'].y, i: 0, entries: ['option1', 'option2'] },
+  exit: { y: strings['exit'].y, i: 0, entries: [] },
 };
 
 var select = 0;
 var opacity = 0;
 var resolver = null;
+var paused = false;
 
 window.config = {
   ready: new Promise(function(resolve, reject) {
@@ -152,6 +162,7 @@ window.config = {
   show: function() {
     window.config.shown = true;
     window.Module.pauseMainLoop();
+    paused = true;
   },
 
   hide: function() {
@@ -162,7 +173,8 @@ window.config = {
         continue;
       setConfig('sion2hd-' + key, options[key].i);
     }
-    window.Module.resumeMainLoop();
+    if (paused)
+      window.Module.resumeMainLoop();
     if (window.config.onupdate)
       window.config.onupdate();
   },
@@ -172,6 +184,9 @@ window.config = {
   },
   useReverb: function() {
     return options['sound'].i == 2;
+  },
+  slowMode: function() {
+    return options['speed'].i + 1;
   },
   shown: false,
   onupdate: null

@@ -84,6 +84,9 @@
 
 /* MOD BEGIN */
 #if defined(EMSCRIPTEN)
+static int slow_mode = 0;
+static int slow_count = 0;
+void set_slow_mode(int mode);
 static  void    exec_emscripten();
 #else
 /* MOD END */
@@ -425,6 +428,11 @@ Restart:
 
 /* MOD BEGIN */
 #if defined(EMSCRIPTEN)
+void set_slow_mode(mode)
+{
+    slow_mode = mode;
+}
+
 /*
    機能：
      EMSCRIPTEN向けに1フレーム分実行する
@@ -433,6 +441,9 @@ Restart:
 */
 static void exec_emscripten()
 {
+    slow_count = (slow_count + 1) % slow_mode;
+    if (slow_count)
+        return;
 	for (int i = 0; i < 100000; ++i) {
 		if ( (pc & 0xFF000001) != 0 ) {
             fprintf(stderr, "address error at $%08x\n", pc);

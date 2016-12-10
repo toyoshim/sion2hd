@@ -10,7 +10,8 @@ SION2	= .
 CC	= emcc
 DEFS	= -DFNC_TRACE -DENV_FROM_INI
 CFLAGS	= $(DEFS) -O2 -include $(MOD68)/preinc.h -I $(RUN68)
-LDFLAGS	= -lm -O2 --js-library runtime68.js --preload-file $(XFILE)
+EXPORTS	= -s EXPORTED_FUNCTIONS="['_main', '_set_slow_mode']"
+LDFLAGS	= -lm -O2 --js-library runtime68.js --preload-file $(XFILE) $(EXPORTS)
 SRCS	= \
 	$(RUN68)/ansicolor-w32.c \
 	$(RUN68)/calc.c \

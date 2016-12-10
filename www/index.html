@@ -128,6 +128,7 @@
               emulation: config.useSound(),
               reverb: config.useReverb()
             }, window.location.origin);
+            Module._set_slow_mode(config.slowMode());
           };
           Module.addRunDependency("config");
           config.ready.then(function() {
