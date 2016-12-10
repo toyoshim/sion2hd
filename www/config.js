@@ -186,7 +186,7 @@ window.config = {
     return options['sound'].i == 2;
   },
   slowMode: function() {
-    return options['speed'].i + 1;
+    return options['speed'].i;
   },
   shown: false,
   onupdate: null

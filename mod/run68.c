@@ -430,7 +430,7 @@ Restart:
 #if defined(EMSCRIPTEN)
 void set_slow_mode(mode)
 {
-    slow_mode = mode;
+    slow_mode = (mode == 0) ? 0 : (mode == 1) ? 2 : 3;
 }
 
 /*
@@ -441,9 +441,11 @@ void set_slow_mode(mode)
 */
 static void exec_emscripten()
 {
-    slow_count = (slow_count + 1) % slow_mode;
-    if (slow_count)
+    slow_count += slow_mode;
+    if (slow_count >= 6) {
+        slow_count -= 6;
         return;
+    }
 	for (int i = 0; i < 100000; ++i) {
 		if ( (pc & 0xFF000001) != 0 ) {
             fprintf(stderr, "address error at $%08x\n", pc);
