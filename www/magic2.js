@@ -118,24 +118,21 @@ class Magic2 {
       bgcontext: 1,
       clients: [],
       apage: 0,
-      use2d: contexts[0].constructor.name == 'CanvasRenderingContext2D',
       scaleX: contexts[0].canvas.height / 256 * 4 / 3,
       scaleY: contexts[0].canvas.height / 256,
       offsetX:
           (contexts[0].canvas.width - (contexts[0].canvas.height * 4 / 3)) / 2
     };
 
-    if (this[_].use2d) {
-      const fg = this[_].contexts[this[_].fgcontext];
-      fg.fillStyle = this[_].palette[0];
-      fg.fillRect(0, 0, fg.canvas.width, fg.canvas.height);
-      fg.canvas.style.display = 'block';
+    const fg = this[_].contexts[this[_].fgcontext];
+    fg.fillStyle = this[_].palette[0];
+    fg.fillRect(0, 0, fg.canvas.width, fg.canvas.height);
+    fg.canvas.style.display = 'block';
 
-      const bg = this[_].contexts[this[_].bgcontext];
-      bg.fillStyle = this[_].palette[0];
-      bg.fillRect(0, 0, fg.canvas.width, fg.canvas.height);
-      bg.canvas.style.display = 'none';
-    }
+    const bg = this[_].contexts[this[_].bgcontext];
+    bg.fillStyle = this[_].palette[0];
+    bg.fillRect(0, 0, fg.canvas.width, fg.canvas.height);
+    bg.canvas.style.display = 'none';
   }
 
   palette (index, color) {
@@ -223,103 +220,98 @@ class Magic2 {
   }
 
   translate3dTo2d () {
-    if (this[_].use2d) {
-      // FIXME: Everything other than 'i' should be const and 'i' should be let.
-      // Fix them once v8 support optimizing const and let values.
+    // FIXME: Everything other than 'i' should be const and 'i' should be let.
+    // Fix them once v8 support optimizing const and let values.
 
-      // Rotate and translate
-      var src = this[_].data.vertices;
-      var pctx3 = this[_].data.pct * 3;
-      var vertices = this[_].translate.vertices;
-      var cx = this[_].parameters[P_CX];
-      var cy = this[_].parameters[P_CY];
-      var cz = this[_].parameters[P_CZ];
-      var dx = this[_].parameters[P_DX];
-      var dy = this[_].parameters[P_DY];
-      var dz = this[_].parameters[P_DZ];
-      var rh = this[_].parameters[P_HEAD] / 180 * Math.PI;
-      var rp = this[_].parameters[P_PITCH] / 180 * Math.PI;
-      var rb = this[_].parameters[P_BANK] / 180 * Math.PI;
-      var ch = Math.cos(rh);
-      var cp = Math.cos(rp);
-      var cb = Math.cos(rb);
-      var sh = Math.sin(rh);
-      var sp = Math.sin(rp);
-      var sb = Math.sin(rb);
-      var m11 = sh * sp * sb + ch * cb;
-      var m12 = sb * cp;
-      var m13 = ch * sp * sb - sh * cb;
-      var m14 = dx + cx;
-      var m21 = sh * sp * cb - sb * ch;
-      var m22 = cp * cb;
-      var m23 = ch * sp * cb + sh * sb;
-      var m24 = dy + cy;
-      var m31 = sh * cp;
-      var m32 = -sp;
-      var m33 = ch * cp;
-      var m34 = dz + cz + this[_].depth.minz;
-      var i;
-      for (i = 0; i < pctx3; i += 3) {
-        var x = src[i + 0] - dx;
-        var y = src[i + 1] - dy;
-        var z = src[i + 2] - dz;
-        vertices[i + 0] = m11 * x + m12 * y + m13 * z + m14;
-        vertices[i + 1] = m21 * x + m22 * y + m23 * z + m24;
-        vertices[i + 2] = m31 * x + m32 * y + m33 * z + m34;
-      }
-      // Perspective
-      for (i = 0; i < pctx3; i += 3) {
-        var nz = vertices[i + 2];
-        if (nz <= 0 || this[_].depth.maxz < nz)
-          continue;
-        var d = nz / 256;
-        vertices[i + 0] /= d;
-        vertices[i + 1] /= d;
-      }
-      // Draw
-      var indices = this[_].data.indices;
-      var lctx2 = this[_].data.lct * 2;
-      var c = this[_].contexts[this[_].bgcontext];
-      c.beginPath();
-      c.strokeStyle = this[_].palette[this[_].data.color];
-      var w = 256 * this[_].scaleX;
-      var h = 256 * this[_].scaleY;
-      var ox = c.canvas.width / 2;
-      var oy = h / 2;
-      // FIXME: Use window information
-      var zx = w / 256;
-      var zy = h / 256;
-      for (i = 0; i < lctx2; i += 2) {
-        var s = indices[i + 0] * 3;
-        var e = indices[i + 1] * 3;
-        var sz = vertices[s + 2];
-        var ez = vertices[e + 2];
-        if (sz <= 0 || this[_].depth.maxz < sz ||
-            ez <= 0 || this[_].depth.maxz < ez) {
-          continue;
-        }
-        c.moveTo(ox + vertices[s + 0] * zx, oy + vertices[s + 1] * zy);
-        c.lineTo(ox + vertices[e + 0] * zx, oy + vertices[e + 1] * zy);
-      }
-      c.closePath();
-      c.stroke();
+    // Rotate and translate
+    var src = this[_].data.vertices;
+    var pctx3 = this[_].data.pct * 3;
+    var vertices = this[_].translate.vertices;
+    var cx = this[_].parameters[P_CX];
+    var cy = this[_].parameters[P_CY];
+    var cz = this[_].parameters[P_CZ];
+    var dx = this[_].parameters[P_DX];
+    var dy = this[_].parameters[P_DY];
+    var dz = this[_].parameters[P_DZ];
+    var rh = this[_].parameters[P_HEAD] / 180 * Math.PI;
+    var rp = this[_].parameters[P_PITCH] / 180 * Math.PI;
+    var rb = this[_].parameters[P_BANK] / 180 * Math.PI;
+    var ch = Math.cos(rh);
+    var cp = Math.cos(rp);
+    var cb = Math.cos(rb);
+    var sh = Math.sin(rh);
+    var sp = Math.sin(rp);
+    var sb = Math.sin(rb);
+    var m11 = sh * sp * sb + ch * cb;
+    var m12 = sb * cp;
+    var m13 = ch * sp * sb - sh * cb;
+    var m14 = dx + cx;
+    var m21 = sh * sp * cb - sb * ch;
+    var m22 = cp * cb;
+    var m23 = ch * sp * cb + sh * sb;
+    var m24 = dy + cy;
+    var m31 = sh * cp;
+    var m32 = -sp;
+    var m33 = ch * cp;
+    var m34 = dz + cz + this[_].depth.minz;
+    var i;
+    for (i = 0; i < pctx3; i += 3) {
+      var x = src[i + 0] - dx;
+      var y = src[i + 1] - dy;
+      var z = src[i + 2] - dz;
+      vertices[i + 0] = m11 * x + m12 * y + m13 * z + m14;
+      vertices[i + 1] = m21 * x + m22 * y + m23 * z + m24;
+      vertices[i + 2] = m31 * x + m32 * y + m33 * z + m34;
     }
+    // Perspective
+    var maxz = this[_].depth.maxz;
+    for (i = 0; i < pctx3; i += 3) {
+      var nz = vertices[i + 2];
+      if (nz < 0 || maxz < nz)
+        continue;
+      var d = nz / 256;
+      vertices[i + 0] /= d;
+      vertices[i + 1] /= d;
+    }
+    // Draw
+    var indices = this[_].data.indices;
+    var lctx2 = this[_].data.lct * 2;
+    var c = this[_].contexts[this[_].bgcontext];
+    c.beginPath();
+    c.strokeStyle = this[_].palette[this[_].data.color];
+    var w = 256 * this[_].scaleX;
+    var h = 256 * this[_].scaleY;
+    var ox = c.canvas.width / 2;
+    var oy = h / 2;
+    // FIXME: Use window information
+    var zx = w / 256;
+    var zy = h / 256;
+    for (i = 0; i < lctx2; i += 2) {
+      var s = indices[i + 0] * 3;
+      var e = indices[i + 1] * 3;
+      var sz = vertices[s + 2];
+      var ez = vertices[e + 2];
+      if (sz < 0 || maxz < sz || ez < 0 || maxz < ez)
+        continue;
+      c.moveTo(ox + vertices[s + 0] * zx, oy + vertices[s + 1] * zy);
+      c.lineTo(ox + vertices[e + 0] * zx, oy + vertices[e + 1] * zy);
+    }
+    c.closePath();
+    c.stroke();
   }
 
   display2d () {
-    if (this[_].use2d) {
-      const previous = this[_].fgcontext;
-      this[_].fgcontext = this[_].bgcontext;
-      this[_].bgcontext = previous;
-      const fg = this[_].contexts[this[_].fgcontext];
-      for (var client of this[_].clients)
-        client(fg);
-      fg.canvas.style.display = 'block';
-      const bg = this[_].contexts[this[_].bgcontext];
-      bg.canvas.style.display = 'none';
-      bg.fillStyle = this[_].palette[0];
-      bg.fillRect(0, 0, bg.canvas.width, bg.canvas.height);
-    }
+    const previous = this[_].fgcontext;
+    this[_].fgcontext = this[_].bgcontext;
+    this[_].bgcontext = previous;
+    const fg = this[_].contexts[this[_].fgcontext];
+    for (var client of this[_].clients)
+      client(fg);
+    fg.canvas.style.display = 'block';
+    const bg = this[_].contexts[this[_].bgcontext];
+    bg.canvas.style.display = 'none';
+    bg.fillStyle = this[_].palette[0];
+    bg.fillRect(0, 0, bg.canvas.width, bg.canvas.height);
   }
 
   color (color) {
@@ -384,7 +376,7 @@ class Magic2 {
           const param_num = mem_read_u16be(memory, addr + 0);
           const param_val = mem_read_s16be(memory, addr + 2);
           addr += 4;
-          this.set3dParameter (param_num, param_val);
+          this.set3dParameter(param_num, param_val);
           break; }
         case C_SET_3D_DATA:
           addr += this.set3dRawData(memory, addr);
