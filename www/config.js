@@ -41,8 +41,8 @@ var draw = function() {
       puts(s.x, s.y, s.text);
   }
   for (var i = 0; i < optionKeys.length; ++i)
-    putc(7, options[optionKeys[i]].y, ' ');
-  putc(7, options[optionKeys[select]].y, '>');
+    putc(5, options[optionKeys[i]].y, ' ');
+  putc(5, options[optionKeys[select]].y, '>');
   window.bg_update(context, 1);
 };
 
@@ -104,22 +104,22 @@ var update = function() {
 };
 
 var strings = {
-  title1:  { on:  true, x: 12, y:  3, text: 'SION\x5b HD' },
-  title2:  { on:  true, x: 11, y:  5, text: '- OPTIONS -' },
-  sounds:  { on:  true, x:  9, y:  8, text: 'SOUND EMULATION' },
-  sound1:  { on:  true, x:  9, y: 10, text: '      OFF      ' },
-  sound2:  { on: false, x:  9, y: 10, text: '    X68SOUND   ' },
-  sound3:  { on: false, x:  9, y: 10, text: 'X68SOUND+REVERB' },
-  speeds:  { on:  true, x: 11, y: 13, text: 'GAME SPEED' },
-  speed1:  { on:  true, x: 12, y: 15, text: ' NORMAL  ' },
-  speed2:  { on:  true, x: 12, y: 15, text: '  SLOW   ' },
-  speed3:  { on:  true, x: 12, y: 15, text: 'VERY SLOW' },
-  options: { on:  true, x: 10, y: 18, text: 'SKIP OPTIONS' },
-  option1: { on:  true, x: 15, y: 20, text: 'OFF' },
-  option2: { on: false, x: 15, y: 20, text: 'ON ' },
-  exit:    { on:  true, x: 14, y: 23, text: 'EXIT' },
+  title1:  { on:  true, x: 10, y:  3, text: 'SION\x5b HD' },
+  title2:  { on:  true, x:  9, y:  5, text: '- OPTIONS -' },
+  sounds:  { on:  true, x:  7, y:  8, text: 'SOUND EMULATION' },
+  sound1:  { on:  true, x:  7, y: 10, text: '      OFF      ' },
+  sound2:  { on: false, x:  7, y: 10, text: '   X68SOUND    ' },
+  sound3:  { on: false, x:  7, y: 10, text: 'X68SOUND+REVERB' },
+  speeds:  { on:  true, x:  9, y: 13, text: 'GAME SPEED' },
+  speed1:  { on:  true, x: 10, y: 15, text: ' NORMAL  ' },
+  speed2:  { on:  true, x: 10, y: 15, text: '  SLOW   ' },
+  speed3:  { on:  true, x: 10, y: 15, text: 'VERY SLOW' },
+  options: { on:  true, x:  8, y: 18, text: 'SKIP OPTIONS' },
+  option1: { on:  true, x: 13, y: 20, text: 'OFF' },
+  option2: { on: false, x: 13, y: 20, text: 'ON ' },
+  exit:    { on:  true, x: 12, y: 23, text: 'EXIT' },
   copy1:   { on:  true, x:  9, y: 28, text: '2016\x22DEC SION\x5b HD' },
-  copy2:   { on:  true, x:  7, y: 29, text: 'BY TOYOSHIMA-HOUSE' },
+  copy2:   { on:  true, x:  4, y: 29, text: 'BY TOYOSHIMA-HOUSE' },
 };
 
 var optionKeys = ['sound', 'speed', 'option', 'exit'];
@@ -127,7 +127,7 @@ var options = {
   sound: {
     y: strings['sounds'].y, i: 0, entries: ['sound1', 'sound2', 'sound3'] },
   speed: {
-    y: strings['speeds'].y, i: 0, entries: ['speed1', 'speed2', 'speed3'] },
+    y: strings['speeds'].y, i: 1, entries: ['speed1', 'speed2', 'speed3'] },
   option: { y: strings['options'].y, i: 0, entries: ['option1', 'option2'] },
   exit: { y: strings['exit'].y, i: 0, entries: [] },
 };
@@ -143,7 +143,7 @@ window.config = {
       var key = optionKeys[select];
       if (key == 'exit')
         continue;
-      options[key].i = Number(getConfig('sion2hd-' + key, 0));
+      options[key].i = Number(getConfig('sion2hd-' + key, options[key].i));
       for (var i = 0; i < options[key].entries.length; ++i)
         strings[options[key].entries[i]].on = i == options[key].i;
     }
