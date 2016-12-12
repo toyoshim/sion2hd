@@ -5,7 +5,8 @@
   </head>
   <body>
     <script type='text/javascript'>
-      var audioContext = new AudioContext();
+      // Safari still provides webkitAudioContext only.
+      var audioContext = new (window.AudioContext || webkitAudioContext)();
       var audioBufferSize = 2048;
       var audioBuffers = [
           new Float32Array(audioBufferSize),
@@ -13,6 +14,24 @@
       ];
       var scriptProcessor =
           audioContext.createScriptProcessor(audioBufferSize, 2, 2);
+      var bufferSource = null;
+      if (!window.AudioContext) {
+        // Safari still provides old usages only.
+        bufferSource = audioContext.createBufferSource();
+        bufferSource.connect(scriptProcessor);
+        if (navigator.userAgent.indexOf('iPhone') < 0) {
+          bufferSource.noteOn(0);
+        } else {
+          // Workaround for mobile safari restriction.
+          var bufferStart = function() {
+            bufferSource.noteOn(0);
+            window.parent.document.body.removeEventListener(
+                'touchstart', bufferStart, false);
+          };
+        }
+        window.parent.document.body.addEventListener(
+            'touchstart', bufferStart, false);
+      }
       var zmusicReady = false;
       var zmusicBufferReady = false;
       var zmusicUpdate = function () {
@@ -107,8 +126,10 @@
           reverb.disconnect();
           if (e.data.emulation) {
             scriptProcessor.connect(audioContext.destination);
-            if (e.data.reverb)
-              scriptProcessor.connect(reverb).connect(audioContext.destination);
+            if (e.data.reverb) {
+              scriptProcessor.connect(reverb);
+              reverb.connect(audioContext.destination);
+            }
           }
         }
       }, false);
