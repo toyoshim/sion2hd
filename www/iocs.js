@@ -173,6 +173,8 @@
         return 'Arrow' + key;
       case 'Esc':
         return 'Escape';
+      case 'v':
+        return 'KeyV';
       case 'x':
         return 'KeyX';
       case 'z':
@@ -215,6 +217,8 @@
       case 55:
       case 116:
         return 'Digit5';
+      case 86:
+        return 'KeyV';
       case 88:
         return 'KeyX';
       case 90:
@@ -269,6 +273,10 @@
       case 'F5':
       case 'Digit5':
         keyStates[12] |= (1 << 7);
+        break;
+      case 'KeyV':
+        magic2.vr(!magic2.vr());
+        window.io_set_mode(magic2.vr());
         break;
       case 'KeyX':
         keyStates[5] |= (1 << 3);
@@ -418,13 +426,13 @@
   }
   var sprite = false;
 
-  magic2.vsync(function(c) {
+  magic2.vsync(function(c, context) {
     if (!sprite)
       return;
-    var scaleWideX = c.canvas.width / 256;
-    var scaleX = c.canvas.height / 256 * 4 / 3;
+    var scaleWideX = context.width / 256;
+    var scaleX = c.canvas.height / 256 * context.aspect;
     var scaleY = c.canvas.height / 256;
-    var offsetX = (c.canvas.width - c.canvas.height * 4 / 3) / 2;
+    var offsetX = context.offset;
     for (var i = 0; i < 128; ++i) {
       var s = sprites[i];
       if (!s.show)
@@ -436,7 +444,7 @@
         case 1:  // 1x1 star
           c.fillStyle = 'rgba(255, 255, 255, 1.0)';
           c.fillRect(
-              (x + 4) * scaleWideX,
+              (x + 4) * scaleWideX + context.base,
               (y + 4) * scaleY,
               s.id ? 1 : 2,
               s.id ? 1 : 2);
@@ -544,10 +552,11 @@
       '________________________________' +  // 0xC0-0xDF
       '________________________________';   // 0xE0-0xFF
 
-  window.bg_update = function(c, page) {
-    var scaleX = c.canvas.height / 256 * 4 / 3 * 8;
+  window.bg_update = function(c, page, context) {
+    var scaleX = c.canvas.height / 256 * context.aspect * 8;
     var scaleY = c.canvas.height / 256 * 8;
-    var offsetX = (c.canvas.width - c.canvas.height * 4 / 3) / 2;
+    var offsetX = context.base - context.position / 3
+        + (context.width - c.canvas.height * context.aspect) / 2;
     c.textAlign = 'center';
     c.textBaseline = 'middle';
     var styleW = bg[page].fg;
@@ -612,8 +621,8 @@
   };
 
   // TODO: Not to draw on each frame, but use a dedicated canvas.
-  magic2.vsync(function(c) {
-    window.bg_update(c, 0);
+  magic2.vsync(function(c, context) {
+    window.bg_update(c, 0, context);
   });
 
   window.iocs_bgscrlst = function(page, x, y) {

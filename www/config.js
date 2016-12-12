@@ -43,7 +43,12 @@ var draw = function() {
   for (var i = 0; i < optionKeys.length; ++i)
     putc(5, options[optionKeys[i]].y, ' ');
   putc(5, options[optionKeys[select]].y, '>');
-  window.bg_update(context, 1);
+  if (magic2.vr()) {
+    window.bg_update(context, 1, magic2.context(1));
+    window.bg_update(context, 1, magic2.context(2));
+  } else {
+    window.bg_update(context, 1, magic2.context(0));
+  }
 };
 
 var keys = { up: false, down: false, left: false, right: false };

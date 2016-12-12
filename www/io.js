@@ -111,11 +111,14 @@
   var y = 0;
   var pal = 0;
   var data = new Array(4 * 6);
+  var vr = magic2.vr();
+  var context = magic2.context(vr ? 1 : 0);
   
   var c = document.getElementById('graphic2').getContext('2d');
-  var scaleX = c.canvas.height / 256 * 4 / 3;
+  var scaleX = c.canvas.height / 256 * context.aspect;
   var scaleY = c.canvas.height / 256;
-  var offsetX = (c.canvas.width - c.canvas.height * 4 / 3) / 2;
+  var center = context.width;
+  var offsetX = (context.width - c.canvas.height * context.aspect) / 2;
   var fontScale = 1.2;
   var fontWidth = (4 * scaleX * fontScale) | 0;
   var fontHalfWidth = (fontWidth / 2) | 0;
@@ -124,6 +127,21 @@
   c.font = fontHeight + 'px \'Geo\'';
   c.textAlign = 'center';
   c.textBaseline = 'middle';
+
+  window.io_set_mode = function (mode) {
+    // TODO: Support dynamic mode change correctly.
+    vr = mode;
+    context = magic2.context(vr ? 1 : 0);
+    scaleX = c.canvas.height / 256 * context.aspect;
+    scaleY = c.canvas.height / 256;
+    center = context.width;
+    offsetX = (context.width - c.canvas.height * context.aspect) / 2;
+    fontWidth = (4 * scaleX * fontScale) | 0;
+    fontHalfWidth = (fontWidth / 2) | 0;
+    fontHeight = (6 * scaleY * fontScale) | 0;
+    fontHalfHeight = (fontHeight / 2) | 0;
+    c.font = fontHeight + 'px \'Geo\'';
+  };
 
   window.io_graphic_data = function(page, index, color) {
     if (!started) {
@@ -146,15 +164,31 @@
       y++;
       if (y == 6) {
         var code = fonts[data.join('')];
-        c.clearRect(
-            baseX * scaleX + offsetX, baseY * scaleY, fontWidth, fontHeight);
-        c.fillStyle = magic2.palette(pal);  /* global magic2 */
-        c.fillText(
-            String.fromCharCode(code),
-            baseX * scaleX + fontHalfWidth + offsetX,
-            baseY * scaleY + fontHalfHeight,
-            fontWidth);
-        started = false;
+        var d = 5;
+        if (vr) {
+          var tx = baseX * scaleX + offsetX;
+          var ty = baseY * scaleY;
+          var tw = fontWidth;
+          c.clearRect(tx + d, ty, tw, fontHeight);
+          c.clearRect(center + tx - d, ty, tw, fontHeight);
+          c.fillStyle = magic2.palette(pal);  /* global magic2 */
+          var ts = String.fromCharCode(code);
+          tx += fontHalfWidth;
+          ty += fontHalfHeight;
+          c.fillText(ts, tx + d, ty, tw);
+          c.fillText(ts, center + tx - d, ty, tw);
+          started = false;
+        } else {
+          c.clearRect(
+              baseX * scaleX + offsetX, baseY * scaleY, fontWidth, fontHeight);
+          c.fillStyle = magic2.palette(pal);  /* global magic2 */
+          c.fillText(
+              String.fromCharCode(code),
+              baseX * scaleX + fontHalfWidth + offsetX,
+              baseY * scaleY + fontHalfHeight,
+              fontWidth);
+          started = false;
+        }
       }
     }
   };

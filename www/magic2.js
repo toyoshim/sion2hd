@@ -118,10 +118,93 @@ class Magic2 {
       bgcontext: 1,
       clients: [],
       apage: 0,
-      scaleX: contexts[0].canvas.height / 256 * 4 / 3,
-      scaleY: contexts[0].canvas.height / 256,
-      offsetX:
-          (contexts[0].canvas.width - (contexts[0].canvas.height * 4 / 3)) / 2
+      vr: false,
+      draw: function (context) {
+        // FIXME: Use const for var other than 'i', and use let for 'i'.
+
+        // Rotate and translate
+        var math = Math;
+        var src = this[_].data.vertices;
+        var pctx3 = this[_].data.pct * 3;
+        var vertices = this[_].translate.vertices;
+        var cx = this[_].parameters[P_CX] - context.position;
+        var cy = this[_].parameters[P_CY];
+        var cz = this[_].parameters[P_CZ];
+        var dx = this[_].parameters[P_DX];
+        var dy = this[_].parameters[P_DY];
+        var dz = this[_].parameters[P_DZ];
+        var rh = this[_].parameters[P_HEAD] / 180 * math.PI;
+        var rp = this[_].parameters[P_PITCH] / 180 * math.PI;
+        var rb = this[_].parameters[P_BANK] / 180 * math.PI;
+        var ch = math.cos(rh);
+        var cp = math.cos(rp);
+        var cb = math.cos(rb);
+        var sh = math.sin(rh);
+        var sp = math.sin(rp);
+        var sb = math.sin(rb);
+        var m11 = sh * sp * sb + ch * cb;
+        var m12 = sb * cp;
+        var m13 = ch * sp * sb - sh * cb;
+        var m14 = dx + cx;
+        var m21 = sh * sp * cb - sb * ch;
+        var m22 = cp * cb;
+        var m23 = ch * sp * cb + sh * sb;
+        var m24 = dy + cy;
+        var m31 = sh * cp;
+        var m32 = -sp;
+        var m33 = ch * cp;
+        var m34 = dz + cz + this[_].depth.minz;
+        var i;
+        for (i = 0; i < pctx3; i += 3) {
+          var x = src[i + 0] - dx;
+          var y = src[i + 1] - dy;
+          var z = src[i + 2] - dz;
+          vertices[i + 0] = m11 * x + m12 * y + m13 * z + m14;
+          vertices[i + 1] = m21 * x + m22 * y + m23 * z + m24;
+          vertices[i + 2] = m31 * x + m32 * y + m33 * z + m34;
+        }
+        // Perspective
+        var maxz = this[_].depth.maxz;
+        for (i = 0; i < pctx3; i += 3) {
+          var nz = vertices[i + 2];
+          if (nz < 0 || maxz < nz)
+            continue;
+          var d = nz / 256;
+          vertices[i + 0] /= d;
+          vertices[i + 1] /= d;
+        }
+        // Draw
+        var indices = this[_].data.indices;
+        var lctx2 = this[_].data.lct * 2;
+        var c = this[_].contexts[this[_].bgcontext];
+        c.save();
+        c.beginPath();
+        c.rect(context.base, 0, context.width, c.canvas.height);
+        c.clip();
+        c.closePath();
+        c.beginPath();
+        c.strokeStyle = this[_].palette[this[_].data.color];
+        var w = 256 * context.scaleX;
+        var h = 256 * context.scaleY;
+        var ox = context.base + context.width / 2;
+        var oy = h / 2;
+        // FIXME: Use window information
+        var zx = w / 256;
+        var zy = h / 256;
+        for (i = 0; i < lctx2; i += 2) {
+          var s = indices[i + 0] * 3;
+          var e = indices[i + 1] * 3;
+          var sz = vertices[s + 2];
+          var ez = vertices[e + 2];
+          if (sz < 0 || maxz < sz || ez < 0 || maxz < ez)
+            continue;
+          c.moveTo(ox + vertices[s + 0] * zx, oy + vertices[s + 1] * zy);
+          c.lineTo(ox + vertices[e + 0] * zx, oy + vertices[e + 1] * zy);
+        }
+        c.closePath();
+        c.stroke();
+        c.restore();
+      }.bind(this)
     };
 
     const fg = this[_].contexts[this[_].fgcontext];
@@ -145,11 +228,28 @@ class Magic2 {
     this[_].palette[index] = 'rgba(' + r + ',' + g + ',' + b + ',1.0)';
   }
 
-  resize () {
-    this[_].scaleX = this[_].contexts[0].canvas.height / 256 * 4 / 3;
-    this[_].scaleY = this[_].contexts[0].canvas.height / 256;
-    this[_].offsetX = (this[_].contexts[0].canvas.width -
-        (this[_].contexts[0].canvas.height * 4 / 3)) / 2;
+  vr (mode) {
+    if (mode === undefined)
+      return this[_].vr;
+    var result = this[_].vr;
+    this[_].vr = mode;
+    return result;
+  }
+
+  context(mode) {
+    var c = this[_].contexts[0].canvas;
+    var base = mode != 2 ? 0 : c.width / 2;
+    var width = mode == 0 ? c.width : c.width / 2;
+    var aspect = mode == 0 ? 4 / 3 : 1;
+    return {
+      base: base,
+      width: width,
+      offset: base + (width - (c.height * aspect)) / 2,
+      position: mode == 0 ? 0 : mode == 1 ? -10 : 10,
+      aspect: aspect,
+      scaleX: c.height / 256 * aspect,
+      scaleY: c.height / 256
+    };
   }
 
   vsync (client) {
@@ -163,10 +263,24 @@ class Magic2 {
     const height = Math.abs(y2 - y1);
     const c = this[_].contexts[this[_].apage];
     c.fillStyle = this[_].palette[this[_].color];
-    c.fillRect(left * this[_].scaleX + this[_].offsetX,
-               top * this[_].scaleY,
-               width * this[_].scaleX,
-               height * this[_].scaleY);
+    if (this[_].vr) {
+      var c1 = this.context(1);
+      c.fillRect(left * c1.scaleX + c1.offset,
+                 top * c1.scaleY,
+                 width * c1.scaleX,
+                 height * c1.scaleY);
+      var c2 = this.context(2);
+      c.fillRect(left * c2.scaleX + c2.offset,
+                 top * c2.scaleY,
+                 width * c2.scaleX,
+                 height * c2.scaleY);
+    } else {
+      var context = this.context(0);
+      c.fillRect(left * context.scaleX + context.offset,
+                 top * context.scaleY,
+                 width * context.scaleX,
+                 height * context.scaleY);
+    }
   }
 
   setWindow (x1, y1, x2, y2) {
@@ -220,84 +334,12 @@ class Magic2 {
   }
 
   translate3dTo2d () {
-    // FIXME: Everything other than 'i' should be const and 'i' should be let.
-    // Fix them once v8 support optimizing const and let values.
-
-    // Rotate and translate
-    var src = this[_].data.vertices;
-    var pctx3 = this[_].data.pct * 3;
-    var vertices = this[_].translate.vertices;
-    var cx = this[_].parameters[P_CX];
-    var cy = this[_].parameters[P_CY];
-    var cz = this[_].parameters[P_CZ];
-    var dx = this[_].parameters[P_DX];
-    var dy = this[_].parameters[P_DY];
-    var dz = this[_].parameters[P_DZ];
-    var rh = this[_].parameters[P_HEAD] / 180 * Math.PI;
-    var rp = this[_].parameters[P_PITCH] / 180 * Math.PI;
-    var rb = this[_].parameters[P_BANK] / 180 * Math.PI;
-    var ch = Math.cos(rh);
-    var cp = Math.cos(rp);
-    var cb = Math.cos(rb);
-    var sh = Math.sin(rh);
-    var sp = Math.sin(rp);
-    var sb = Math.sin(rb);
-    var m11 = sh * sp * sb + ch * cb;
-    var m12 = sb * cp;
-    var m13 = ch * sp * sb - sh * cb;
-    var m14 = dx + cx;
-    var m21 = sh * sp * cb - sb * ch;
-    var m22 = cp * cb;
-    var m23 = ch * sp * cb + sh * sb;
-    var m24 = dy + cy;
-    var m31 = sh * cp;
-    var m32 = -sp;
-    var m33 = ch * cp;
-    var m34 = dz + cz + this[_].depth.minz;
-    var i;
-    for (i = 0; i < pctx3; i += 3) {
-      var x = src[i + 0] - dx;
-      var y = src[i + 1] - dy;
-      var z = src[i + 2] - dz;
-      vertices[i + 0] = m11 * x + m12 * y + m13 * z + m14;
-      vertices[i + 1] = m21 * x + m22 * y + m23 * z + m24;
-      vertices[i + 2] = m31 * x + m32 * y + m33 * z + m34;
+    if (this[_].vr) {
+      this[_].draw(this.context(1));
+      this[_].draw(this.context(2));
+    } else {
+      this[_].draw(this.context(0));
     }
-    // Perspective
-    var maxz = this[_].depth.maxz;
-    for (i = 0; i < pctx3; i += 3) {
-      var nz = vertices[i + 2];
-      if (nz < 0 || maxz < nz)
-        continue;
-      var d = nz / 256;
-      vertices[i + 0] /= d;
-      vertices[i + 1] /= d;
-    }
-    // Draw
-    var indices = this[_].data.indices;
-    var lctx2 = this[_].data.lct * 2;
-    var c = this[_].contexts[this[_].bgcontext];
-    c.beginPath();
-    c.strokeStyle = this[_].palette[this[_].data.color];
-    var w = 256 * this[_].scaleX;
-    var h = 256 * this[_].scaleY;
-    var ox = c.canvas.width / 2;
-    var oy = h / 2;
-    // FIXME: Use window information
-    var zx = w / 256;
-    var zy = h / 256;
-    for (i = 0; i < lctx2; i += 2) {
-      var s = indices[i + 0] * 3;
-      var e = indices[i + 1] * 3;
-      var sz = vertices[s + 2];
-      var ez = vertices[e + 2];
-      if (sz < 0 || maxz < sz || ez < 0 || maxz < ez)
-        continue;
-      c.moveTo(ox + vertices[s + 0] * zx, oy + vertices[s + 1] * zy);
-      c.lineTo(ox + vertices[e + 0] * zx, oy + vertices[e + 1] * zy);
-    }
-    c.closePath();
-    c.stroke();
   }
 
   display2d () {
@@ -305,8 +347,18 @@ class Magic2 {
     this[_].fgcontext = this[_].bgcontext;
     this[_].bgcontext = previous;
     const fg = this[_].contexts[this[_].fgcontext];
-    for (var client of this[_].clients)
-      client(fg);
+    if (this[_].vr) {
+      var c1 = this.context(1);
+      var c2 = this.context(2);
+      for (var client of this[_].clients) {
+        client(fg, c1);
+        client(fg, c2);
+      }
+    } else {
+      var c = this.context(0);
+      for (var client of this[_].clients)
+        client(fg, c);
+    }
     fg.canvas.style.display = 'block';
     const bg = this[_].contexts[this[_].bgcontext];
     bg.canvas.style.display = 'none';

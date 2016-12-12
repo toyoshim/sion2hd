@@ -100,9 +100,8 @@
             document.getElementsByTagName('canvas'), function(c) {
           c.width = window.innerWidth;
           c.height = window.innerHeight;
+          window.io_set_mode(magic2.vr());
         });
-        if (magic2)
-          magic2.resize();
       }, false);
 
       var Module = {
