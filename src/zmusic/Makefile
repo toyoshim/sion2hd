@@ -10,11 +10,11 @@ SION2	= ../../www/sion2
 ZMSC2	= .
 CC	= emcc
 DEFS	= -DFNC_TRACE -DENV_FROM_INI -DEMSCRIPTEN_KEEPR
-CFLAGS	= $(DEFS) -O2 -include $(MOD68)/preinc.h -I $(RUN68) -I $(OPM) -I $(ZMSC2)/compat
+CFLAGS	= $(DEFS) -Oz -include $(MOD68)/preinc.h -I $(RUN68) -I $(OPM) -I $(ZMSC2)/compat
 CXXFLAGS= $(CFLAGS) -fno-operator-names
 ZMFUNCS	= '_zmusic_init', '_zmusic_update', '_zmusic_trap'
 EXPORTS	= -s EXPORTED_FUNCTIONS="['_main', $(ZMFUNCS)]"
-LDFLAGS	= -lm -O2 --js-library runtime68.js --preload-file $(SION2) $(EXPORTS)
+LDFLAGS	= -lm -Oz --js-library runtime68.js --preload-file $(SION2) $(EXPORTS)
 CSRCS	= \
 	$(RUN68)/ansicolor-w32.c \
 	$(RUN68)/calc.c \
