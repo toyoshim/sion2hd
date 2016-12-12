@@ -8,9 +8,19 @@
 #include "lfo.h"
 #include "adpcm.h"
 #include "pcm8.h"
-#include "../../mod/opm.h"
+#include "opm.h"
 
 Opm opm;
+
+void OpmTimeProc(UINT, UINT, DWORD, DWORD, DWORD) {
+}
+
+void waveOutProc(HWAVEOUT, UINT, DWORD, DWORD, DWORD) {
+}
+
+DWORD waveOutThread(LPVOID) {
+  return 0;
+}
 
 int X68Sound_StartPcm(int samprate, int opmflag, int adpcmflag, int pcmbuf) {
   return opm.StartPcm(samprate, opmflag, adpcmflag, pcmbuf);

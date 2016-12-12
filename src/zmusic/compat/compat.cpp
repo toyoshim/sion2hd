@@ -20,10 +20,6 @@ uint16_t _byteswap_ushort(uint16_t data) {
   return (l << 8) | h;
 }
 
-DWORD timeGetTime() {
-  return 0;
-}
-
 // Since we do not create a thread, these methods can be non-atomic operations.
 void _InterlockedIncrement(volatile long* value) {
   *value = (*value + 1);
@@ -40,10 +36,71 @@ long _InterlockedCompareExchange(volatile long* dst, long ex, long cmp) {
   return cmp;
 }
 
+BOOL CloseHandle(HANDLE) {
+  return TRUE;
+}
+
+HANDLE CreateThread(
+    LPSECURITY_ATTRIBUTES, DWORD, LPTHREAD_START_ROUTINE, LPVOID, DWORD,
+    LPDWORD) {
+  return INVALID_HANDLE_VALUE;
+}
+
 LPVOID GlobalAllocPtr(UINT fuFlags, DWORD cbBytes) {
   return malloc(cbBytes);
 }
 
+BOOL GlobalFreePtr(LPCVOID) {
+  return TRUE;
+}
+
+BOOL PostThreadMessage(DWORD, UINT, WPARAM, LPARAM) {
+  return TRUE;
+}
+
+BOOL SetThreadPriority(HANDLE, int) {
+  return TRUE;
+}
+
+VOID Sleep(DWORD) {
+}
+
+DWORD WaitForSingleObject(HANDLE, DWORD) {
+  return 0;
+}
+
+MMRESULT timeBeginPeriod(UINT) {
+  return MMSYSERR_NOERROR;
+}
+
+MMRESULT timeEndPeriod(UINT) {
+  return MMSYSERR_NOERROR;
+}
+
+DWORD timeGetTime() {
+  return MMSYSERR_NOERROR;
+}
+
+MMRESULT timeKillEvent(UINT) {
+  return MMSYSERR_NOERROR;
+}
+
+MMRESULT timeSetEvent(UINT, UINT, LPTIMECALLBACK, DWORD, UINT) {
+  return MMSYSERR_NOERROR;
+}
+
+MMRESULT waveOutClose(HWAVEOUT) {
+  return MMSYSERR_NOERROR;
+}
+
 MMRESULT waveOutPrepareHeader(HWAVEOUT hwo, LPWAVEHDR pwh, UINT cbwh) {
+  return MMSYSERR_NOERROR;
+}
+
+MMRESULT waveOutUnprepareHeader(HWAVEOUT, LPWAVEHDR, UINT) {
+  return MMSYSERR_NOERROR;
+}
+
+MMRESULT waveOutOpen(LPHWAVEOUT, UINT, LPWAVEFORMATEX, DWORD, DWORD, DWORD) {
   return MMSYSERR_NOERROR;
 }
