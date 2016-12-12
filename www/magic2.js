@@ -148,6 +148,13 @@ class Magic2 {
     this[_].palette[index] = 'rgba(' + r + ',' + g + ',' + b + ',1.0)';
   }
 
+  resize () {
+    this[_].scaleX = this[_].contexts[0].canvas.height / 256 * 4 / 3;
+    this[_].scaleY = this[_].contexts[0].canvas.height / 256;
+    this[_].offsetX = (this[_].contexts[0].canvas.width -
+        (this[_].contexts[0].canvas.height * 4 / 3)) / 2;
+  }
+
   vsync (client) {
     this[_].clients.push(client);
   }

@@ -94,6 +94,17 @@
         c.height = window.innerHeight;
         return c.getContext('2d');
       }));
+
+      window.addEventListener('resize', function() {
+        Array.prototype.map.call(
+            document.getElementsByTagName('canvas'), function(c) {
+          c.width = window.innerWidth;
+          c.height = window.innerHeight;
+        });
+        if (magic2)
+          magic2.resize();
+      }, false);
+
       var Module = {
         preRun: [function() {
           FS.mkdir('/persistent');
