@@ -167,7 +167,7 @@ class Magic2 {
         var maxz = this[_].depth.maxz;
         for (i = 0; i < pctx3; i += 3) {
           var nz = vertices[i + 2];
-          if (nz < 0 || maxz < nz)
+          if (nz <= 0 || maxz < nz)
             continue;
           var d = nz / 256;
           vertices[i + 0] /= d;
@@ -196,7 +196,7 @@ class Magic2 {
           var e = indices[i + 1] * 3;
           var sz = vertices[s + 2];
           var ez = vertices[e + 2];
-          if (sz < 0 || maxz < sz || ez < 0 || maxz < ez)
+          if (sz <= 0 || maxz < sz || ez <= 0 || maxz < ez)
             continue;
           c.moveTo(ox + vertices[s + 0] * zx, oy + vertices[s + 1] * zy);
           c.lineTo(ox + vertices[e + 0] * zx, oy + vertices[e + 1] * zy);
@@ -254,6 +254,35 @@ class Magic2 {
 
   vsync (client) {
     this[_].clients.push(client);
+  }
+
+  line (x, y) {
+    const c = this[_].contexts[this[_].apage];
+    const n = x.length;
+    c.strokeStyle = this[_].palette[this[_].color];
+    if (this[_].vr) {
+      var c1 = this.context(1);
+      c.beginPath();
+      c.moveTo(x[0] * c1.scaleX + c1.offset, y[0] * c1.scaleY);
+      for (let i = 1; i < n; ++i)
+        c.lineTo(x[i] * c1.scaleX + c1.offset, y[i] * c1.scaleY);
+      c.stroke();
+      var c2 = this.context(2);
+      c.beginPath();
+      c.moveTo(x[0] * c2.scaleX + c2.offset, y[0] * c2.scaleY);
+      for (let i = 1; i < n; ++i)
+        c.lineTo(x[i] * c2.scaleX + c2.offset, y[i] * c2.scaleY);
+      c.stroke();
+    } else {
+      var context = this.context(0);
+      c.beginPath();
+      c.moveTo(x[0] * context.scaleX + context.offset, y[0] * context.scaleY);
+      for (let i = 1; i < n; ++i) {
+        c.lineTo(x[i] * context.scaleX + context.offset,
+            y[i] * context.scaleY);
+      }
+      c.stroke();
+    }
   }
 
   boxFull (x1, y1, x2, y2) {
@@ -387,13 +416,22 @@ class Magic2 {
       var cmd = mem_read_u16be(memory, addr);
       addr += 2;
       switch (cmd) {
-        case C_LINE:
-          throw new Error('magic2: unsupported command LINE');
+        case C_LINE: {
+          const n = mem_read_u16be(memory, addr + 0);
+          const x = [];
+          const y = [];
+          for (let i = 0; i < n; ++i) {
+            x.push(mem_read_u16be(memory, addr + 2 + i * 4));
+            y.push(mem_read_u16be(memory, addr + 4 + i * 4));
+          }
+          addr += 2 + 4 * n;
+          this.line(x, y);
+          break; }
         case C_SPLINE:
           throw new Error('magic2: unsupported command SPLINE');
         case C_BOX:
           addr += 8;
-          throw new Error('magic2: unsupported command SPLINE');
+          throw new Error('magic2: unsupported command BOX');
         case C_TRIANGLE:
           throw new Error('magic2: unsupported command TRIANGLE');
         case C_BOX_FULL: {

@@ -66,9 +66,14 @@ var update = function() {
     opacity += 5;
     document.getElementById('bg2').style.opacity = opacity / 100;
   }
-  var key0 = window.iocs_bitsns(0, true);
-  if (key0 & (1 << 1) && !window.config.shown)
-    window.config.show();
+  if (!window.config.shown) {
+    var key0 = window.iocs_bitsns(0, true);
+    var pad = navigator.getGamepads && navigator.getGamepads()[0];
+    if ((key0 & (1 << 1)) || (pad && pad.buttons[9] && pad.buttons[9].pressed)) {
+      draw();
+      window.config.show();
+    }
+  }
 
   if (!window.config.shown)
     return;

@@ -397,6 +397,14 @@
     var y = pad.axes[1] || 0;
     var a = pad.buttons[0] && pad.buttons[0].pressed;
     var b = pad.buttons[1] && pad.buttons[1].pressed;
+    if (pad.buttons[2] && pad.buttons[2].pressed && !magic2.vr()) {
+        magic2.vr(true);
+        window.io_set_mode(true);
+    }
+    if (pad.buttons[3] && pad.buttons[3].pressed && magic2.vr()) {
+        magic2.vr(false);
+        window.io_set_mode(false);
+    }
     if (x < -0.5)
       bits &= ~0x04;
     else if (x > 0.5)
