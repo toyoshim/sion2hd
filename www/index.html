@@ -44,45 +44,21 @@
       <canvas id="graphic3" style="z-index: 3;"></canvas>
       <canvas id="bg2" style="z-index: 4;"></canvas>
     </div>
-    <iframe src="zmusic.html" id="zmusic"></iframe>
     <script type="text/javascript" charset="UTF-8" src="magic2.js"></script>
     <script type='text/javascript'>
-      var zmusic = new Promise(function(resolve, reject) {
-        window.addEventListener('message', function(e) {
-          if (e.data.type == 'zmusic' && e.data.command == 'init') {
-            resolve();
-          }
-        }, false);
-      });
-      var zmusicSentBuffer = {};
-      window.zmusic_bind = function(address, name) {
-        document.getElementById('zmusic').contentWindow.postMessage({
-          type: 'zmusic',
-          command: 'bind',
-          key: address,
-          value: name
-        }, window.location.origin);
+      var xhr = function(url) {
+        return new Promise(function (resolve, reject) {
+          var xhr = new XMLHttpRequest();
+          xhr.open('GET', url, true);
+          xhr.responseType = 'arraybuffer';
+          xhr.addEventListener('load', e => {
+            resolve(xhr.response);
+            xhr.abort();
+          }, false);
+          xhr.send();
+        });
       };
-      window.zmusic_call = function(base, d1, d2, d3, d4, a1) {
-        var data = null;
-        if (d1 == 0x12 && !zmusicSentBuffer[a1]) {
-          zmusicSentBuffer[a1] = true;
-          var size = 256;
-          data = new Uint8Array(size);
-          for (var i = 0; i < size; ++i)
-            data[i] = Module.HEAPU8[base + a1 + i];
-        }
-        document.getElementById('zmusic').contentWindow.postMessage({
-          type: 'zmusic',
-          command: 'trap',
-          d1: d1,
-          d2: d2,
-          d3: d3,
-          d4: d4,
-          a1: a1,
-          data: data
-        }, window.location.origin);
-      };
+
       document.fonts.load('10px Audiowide');
       document.fonts.load('10px \'Fira Mono\'');
       document.fonts.load('10px Geo');
@@ -104,6 +80,48 @@
         });
       }, false);
 
+      var zmd = {};
+      var se = {};
+      var zmdPending = 0;
+      var audioContext = new (window.AudioContext || webkitAudioContext);
+      var reverb = audioContext.createConvolver();
+      reverb.connect(audioContext.destination);
+      xhr('ir.wav').then(data =>
+          audioContext.decodeAudioData(data, buffer => reverb.buffer = buffer));
+
+      /* global ZMUSIC */
+      window.zmusic_bind = function(address, name) {
+        var key = address;
+        xhr('sion2/' + name).then(data => {
+          zmd[key] = data;
+          if (zmdPending == key && ZMUSIC.state != ZMUSIC.WAITING)
+            ZMUSIC.play(data);
+        });
+      };
+      window.zmusic_call = function(base, d1, d2, d3, d4, a1) {
+        var data = null;
+        var offset = 0;
+        var length = 0;
+        if (d1 == 0x11) {
+          zmdPending = 0;
+          if (zmd[a1] && ZMUSIC.state != ZMUSIC.WAITING)
+            ZMUSIC.play(zmd[a1]);
+          else
+            zmdPending = a1;
+          return;
+        } else if (d1 == 0x12) {
+          if (!se[a1]) {
+            se[a1] = new Uint8Array(256);
+            for (var i = 0; i < 256; ++i)
+              se[a1][i] = Module.HEAPU8[base + a1 + i];
+          }
+          data = se[a1].buffer;
+          length = 256;
+          a1 = 0x170000;
+        }
+        ZMUSIC.trap(d1, d2, d3, d4, a1, data, offset, length);
+      };
+
       var Module = {
         preRun: [function() {
           FS.mkdir('/persistent');
@@ -124,7 +142,24 @@
         },
         preInit: function() {
           Module.addRunDependency("zmusic");
-          zmusic.then(function() {
+          Promise.all([
+              ZMUSIC.install(['ZMUSIC110.X', '-n', '-u', '-t256', '-w256'], {
+                context: audioContext
+              }),
+              xhr('sion2/NEIRO.ZMS'),
+              xhr('sion2/SION2.ZPD')
+          ]).then(results => {
+            if (navigator.userAgent.indexOf('iPhone') >= 0) {
+              document.addEventListener('touchstart', e => {
+                ZMUSIC.compileAndPlay(results[1]);
+                ZMUSIC.play(null, results[2]);
+                if (zmdPending && zmd[zmdPending])
+                  ZMUSIC.play(zmd[zmdPending]);
+              }, { once: true, capture: false });
+            } else {
+              ZMUSIC.compileAndPlay(results[1]);
+              ZMUSIC.play(null, results[2]);
+            }
             Module.removeRunDependency("zmusic");
           });
           Module.addRunDependency("fonts");
@@ -132,12 +167,11 @@
             Module.removeRunDependency("fonts");
           });
           config.onupdate = function() {
-            document.getElementById('zmusic').contentWindow.postMessage({
-              type: 'zmusic',
-              command: 'config',
-              emulation: config.useSound(),
-              reverb: config.useReverb()
-            }, window.location.origin);
+            ZMUSIC.disconnect();
+            if (config.useSound())
+              ZMUSIC.connect(audioContext.destination);
+            if (config.useReverb())
+              ZMUSIC.connect(reverb);
             Module._set_slow_mode(config.slowMode());
           };
           Module.addRunDependency("config");
@@ -151,6 +185,8 @@
     <script defer type="text/javascript" charset="UTF-8" src="iocs.js"></script>
     <script defer type="text/javascript" charset="UTF-8" src="io.js"></script>
     <script defer type="text/javascript" charset="UTF-8" src="config.js">
+    </script>
+    <script defer type="text/javascript" charset="UTF-8" src="zmusic.js">
     </script>
     <script defer type="text/javascript" charset="ShiftJIS" src="sion2.js">
     </script>
