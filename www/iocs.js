@@ -32,6 +32,7 @@
   };
 
   document.addEventListener('touchstart', function(e) {
+    e.preventDefault();
     var w = window.innerWidth;
     var h = window.innerHeight;
     for (var i = 0; i < e.changedTouches.length; ++i) {
@@ -63,9 +64,10 @@
         touchbits &= ~0x20;
       }
     }
-  }, false);
+  }, { passive: false, capture: false });
 
   document.addEventListener('touchend', function(e) {
+    e.preventDefault();
     for (var i = 0; i < e.changedTouches.length; ++i) {
       var touch = e.changedTouches[i];
       var id = touch.identifier;
@@ -89,7 +91,7 @@
         touches.x.id = -1;
       }
     }
-  }, false);
+  }, { passive: false, capture: false });
 
   var updateTouch = function(a, d) {
     var offset = a * -4;
@@ -131,7 +133,7 @@
         touchbits |= 0x03;
       }
     }
-  }, false);
+  }, { passive: false, capture: false });
 
   var keyStates = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   var keyRepeatStates = [];
