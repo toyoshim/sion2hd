@@ -171,17 +171,18 @@
           var tw = fontWidth;
           c.clearRect(tx + d, ty, tw, fontHeight);
           c.clearRect(center + tx - d, ty, tw, fontHeight);
-          c.fillStyle = magic2.palette(pal);  /* global magic2 */
           var ts = String.fromCharCode(code);
           tx += fontHalfWidth;
           ty += fontHalfHeight;
+          c.fillStyle = magic2.palette(pal)[vr == 2 ? 'cl' : 'c'];  /* global magic2 */
           c.fillText(ts, tx + d, ty, tw);
+          c.fillStyle = magic2.palette(pal)[vr == 2 ? 'cr' : 'c'];  /* global magic2 */
           c.fillText(ts, center + tx - d, ty, tw);
           started = false;
         } else {
           c.clearRect(
               baseX * scaleX + offsetX, baseY * scaleY, fontWidth, fontHeight);
-          c.fillStyle = magic2.palette(pal);  /* global magic2 */
+          c.fillStyle = magic2.palette(pal)['c'];  /* global magic2 */
           c.fillText(
               String.fromCharCode(code),
               baseX * scaleX + fontHalfWidth + offsetX,

@@ -277,7 +277,7 @@
         keyStates[12] |= (1 << 7);
         break;
       case 'KeyV':
-        magic2.vr(!magic2.vr());
+        magic2.vr((magic2.vr() + 1) % 3);
         window.io_set_mode(magic2.vr());
         break;
       case 'KeyX':
@@ -287,7 +287,7 @@
         keyStates[5] |= (1 << 2);
         break;
       default:
-        console.log(e);
+        //console.log(e);
         break;
     }
   }, false);
@@ -346,7 +346,7 @@
         keyStates[5] &= ~(1 << 2);
         break;
       default:
-        console.log(e);
+        //console.log(e);
         break;
     }
   }, false);
@@ -452,7 +452,7 @@
       switch (s.id) {
         case 0:  // 2x2 star
         case 1:  // 1x1 star
-          c.fillStyle = 'rgba(255, 255, 255, 1.0)';
+          c.fillStyle = magic2.palette(15)[context.color];
           c.fillRect(
               (x + 4) * scaleWideX + context.base,
               (y + 4) * scaleY,
@@ -465,7 +465,7 @@
           var h = 16 * scaleY / scale;
           var bx = x * scaleX + offsetX + (16 * scaleX - w) / 2;
           var by = y * scaleY + (16 * scaleY - h) / 2;
-          c.strokeStyle = 'rgba(0, 255, 255, 0.7)';
+          c.strokeStyle = magic2.palette(11)[context.color];
           c.beginPath();
           c.moveTo(bx, by + h / 2);
           c.lineTo(bx, by + h / 5);
@@ -489,7 +489,7 @@
           c.lineTo(bx + w * 5 / 7, by + h / 3);
           c.stroke();
           c.closePath();
-          c.strokeStyle = 'rgba(255, 0, 0, 0.7)';
+          c.strokeStyle = magic2.palette(5)[context.color];
           c.beginPath();
           c.moveTo(bx + w * 12 / 16, by + h * 12 / 16);
           c.lineTo(bx + w * 13 / 16, by + h * 13 / 16);
@@ -501,7 +501,7 @@
         break;
       }
       // Default: TOFU.
-      c.fillStyle = 'rgba(255, 255, 255, 1.0)';
+      c.fillStyle = magic2.palette(15)[context.color];
       c.fillRect(
           x * scaleX + offsetX,
           y * scaleY,
@@ -569,9 +569,9 @@
         + (context.width - c.canvas.height * context.aspect) / 2;
     c.textAlign = 'center';
     c.textBaseline = 'middle';
-    var styleW = bg[page].fg;
-    var styleB = 'rgba(0, 255, 255, 0.5)';
-    var styleR = 'rgba(255, 0, 0, 0.5)';
+    var styleW = magic2.palette(bg[page].fg)[context.color];
+    var styleB = magic2.palette(11)[context.color];
+    var styleR = magic2.palette( 5)[context.color];
     var fontA = scaleY + 'px \'Audiowide\'';
     var fontF = scaleY + 'px \'Fira Mono\'';
     var pattern = bg[page].pattern;
@@ -644,7 +644,7 @@
   window.iocs_bgtextcl = function(page, code) {
     page &= 1;
     bg[page] = {
-      fg: 'rgba(255, 255, 255, 1.0)',
+      fg: 15,
       pattern: new Array(64 * 64),
       scroll: {
         x: 0,

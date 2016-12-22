@@ -42,6 +42,11 @@ const P_HEAD = 6;
 const P_PITCH = 7;
 const P_BANK = 8;
 
+// VR mode.
+const V_NORMAL = 0;
+const V_SPLIT = 1;
+const V_COLOR = 2;
+
 /**
  * Decodes an unsigned 16-bit number in big endian.
  * @param {Uint8Array} memory memory image
@@ -96,29 +101,38 @@ class Magic2 {
         indices: new Float32Array(8192 * 2)
       },
       palette: [
-        'rgba(  0,   0,   0, 1.0)',
-        'rgba( 85,  85,  85, 1.0)',
-        'rgba(  0,   0, 127, 1.0)',
-        'rgba(  0,   0, 255, 1.0)',
-        'rgba(127,   0,   0, 1.0)',
-        'rgba(255,   0,   0, 1.0)',
-        'rgba(127,   0, 127, 1.0)',
-        'rgba(255,   0, 255, 1.0)',
-        'rgba(  0, 127,   0, 1.0)',
-        'rgba(  0, 255,   0, 1.0)',
-        'rgba(  0, 127, 127, 1.0)',
-        'rgba(  0, 255, 255, 1.0)',
-        'rgba(127, 127,   0, 1.0)',
-        'rgba(255, 255,   0, 1.0)',
-        'rgba(170, 170, 170, 1.0)',
-        'rgba(255, 255, 255, 1.0)'
+        { r:   0, g:   0, b:   0, c: 'rgba(  0,   0,   0, 1.0)' },  //  0
+        { r:  85, g:  85, b:  85, c: 'rgba( 85,  85,  85, 1.0)' },  //  1
+        { r:   0, g:   0, b: 127, c: 'rgba(  0,   0, 127, 1.0)' },  //  2
+        { r:   0, g:   0, b: 255, c: 'rgba(  0,   0, 255, 1.0)' },  //  3
+        { r: 127, g:   0, b:   0, c: 'rgba(127,   0,   0, 1.0)' },  //  4
+        { r: 255, g:   0, b:   0, c: 'rgba(255,   0,   0, 1.0)' },  //  5
+        { r: 127, g:   0, b: 127, c: 'rgba(127,   0, 127, 1.0)' },  //  6
+        { r: 255, g:   0, b: 255, c: 'rgba(255,   0, 255, 1.0)' },  //  7
+        { r:   0, g: 127, b:   0, c: 'rgba(  0, 127,   0, 1.0)' },  //  8
+        { r:   0, g: 255, b:   0, c: 'rgba(  0, 255,   0, 1.0)' },  //  9
+        { r:   0, g: 127, b: 127, c: 'rgba(  0, 127, 127, 1.0)' },  // 10
+        { r:   0, g: 255, b: 255, c: 'rgba(  0, 255, 255, 1.0)' },  // 11
+        { r: 127, g: 127, b:   0, c: 'rgba(127, 127,   0, 1.0)' },  // 12
+        { r: 255, g: 255, b:   0, c: 'rgba(255, 255,   0, 1.0)' },  // 13
+        { r: 170, g: 170, b: 170, c: 'rgba(170, 170, 170, 1.0)' },  // 14
+        { r: 255, g: 255, b: 255, c: 'rgba(255, 255, 255, 1.0)' }   // 15
       ],
       contexts: contexts,
       fgcontext: 0,
       bgcontext: 1,
       clients: [],
       apage: 0,
-      vr: false,
+      vr: 0,
+      updatePalette: function (i) {
+        const palette = this[_].palette[i];
+        palette.c =
+            'rgba(' + palette.r + ',' + palette.g + ',' + palette.b + ',1.0)';
+        palette.l =
+            (0.299 * palette.r + 0.587 * palette.g + 0.114 * palette.b) | 0;
+        palette.cl = 'rgba(' + palette.l + ',0,0,1.0)';
+        palette.cr = 'rgba(0,0,' + palette.l + ',1.0)';
+      }.bind(this),
       draw: function (context) {
         // FIXME: Use const for var other than 'i', and use let for 'i'.
 
@@ -183,7 +197,7 @@ class Magic2 {
         c.clip();
         c.closePath();
         c.beginPath();
-        c.strokeStyle = this[_].palette[this[_].data.color];
+        c.strokeStyle = this[_].palette[this[_].data.color][context.color];
         var w = 256 * context.scaleX;
         var h = 256 * context.scaleY;
         var ox = context.base + context.width / 2;
@@ -208,14 +222,16 @@ class Magic2 {
     };
 
     const fg = this[_].contexts[this[_].fgcontext];
-    fg.fillStyle = this[_].palette[0];
-    fg.fillRect(0, 0, fg.canvas.width, fg.canvas.height);
     fg.canvas.style.display = 'block';
 
     const bg = this[_].contexts[this[_].bgcontext];
-    bg.fillStyle = this[_].palette[0];
-    bg.fillRect(0, 0, fg.canvas.width, fg.canvas.height);
     bg.canvas.style.display = 'none';
+
+    for (let context of this[_].contexts) {
+      context.clearRect(0, 0, fg.canvas.width, fg.canvas.height);
+      context.globalCompositeOperation = 'lighter';
+    }
+    this.vr(2);
   }
 
   palette (index, color) {
@@ -225,7 +241,11 @@ class Magic2 {
     var r = (((color >>  6) & 0x1f) << 3) + i;
     var g = (((color >> 11) & 0x1f) << 3) + i;
     var b = (((color >>  1) & 0x1f) << 3) + i;
-    this[_].palette[index] = 'rgba(' + r + ',' + g + ',' + b + ',1.0)';
+    var palette = this[_].palette[index];
+    palette.r = r;
+    palette.g = g;
+    palette.b = b;
+    this[_].updatePalette(index);
   }
 
   vr (mode) {
@@ -233,15 +253,20 @@ class Magic2 {
       return this[_].vr;
     var result = this[_].vr;
     this[_].vr = mode;
+    for (let i = 0; i < 16; ++i)
+      this[_].updatePalette(i);
     return result;
   }
 
   context(mode) {
-    var c = this[_].contexts[0].canvas;
-    var base = mode != 2 ? 0 : c.width / 2;
-    var width = mode == 0 ? c.width : c.width / 2;
-    var aspect = mode == 0 ? 4 / 3 : 1;
+    const split = this[_].vr == V_SPLIT;
+    const c = this[_].contexts[0].canvas;
+    const base = (!split || mode != 2) ? 0 : c.width / 2;
+    const width = (!split || mode == 0) ? c.width : c.width / 2;
+    const aspect = (!split || mode == 0) ? 4 / 3 : 1;
+    const color = this[_].vr != V_COLOR ? 'c' : mode == 1 ? 'cl' : 'cr';
     return {
+      color: color,
       base: base,
       width: width,
       offset: base + (width - (c.height * aspect)) / 2,
@@ -259,22 +284,24 @@ class Magic2 {
   line (x, y) {
     const c = this[_].contexts[this[_].apage];
     const n = x.length;
-    c.strokeStyle = this[_].palette[this[_].color];
     if (this[_].vr) {
-      var c1 = this.context(1);
+      const c1 = this.context(1);
+      c.strokeStyle = this[_].palette[this[_].color][c1.color];
       c.beginPath();
       c.moveTo(x[0] * c1.scaleX + c1.offset, y[0] * c1.scaleY);
       for (let i = 1; i < n; ++i)
         c.lineTo(x[i] * c1.scaleX + c1.offset, y[i] * c1.scaleY);
       c.stroke();
-      var c2 = this.context(2);
+      const c2 = this.context(2);
+      c.strokeStyle = this[_].palette[this[_].color][c2.color];
       c.beginPath();
       c.moveTo(x[0] * c2.scaleX + c2.offset, y[0] * c2.scaleY);
       for (let i = 1; i < n; ++i)
         c.lineTo(x[i] * c2.scaleX + c2.offset, y[i] * c2.scaleY);
       c.stroke();
     } else {
-      var context = this.context(0);
+      const context = this.context(0);
+      c.strokeStyle = this[_].palette[this[_].color][context.color];
       c.beginPath();
       c.moveTo(x[0] * context.scaleX + context.offset, y[0] * context.scaleY);
       for (let i = 1; i < n; ++i) {
@@ -291,20 +318,22 @@ class Magic2 {
     const width = Math.abs(x2 - x1);
     const height = Math.abs(y2 - y1);
     const c = this[_].contexts[this[_].apage];
-    c.fillStyle = this[_].palette[this[_].color];
     if (this[_].vr) {
-      var c1 = this.context(1);
+      const c1 = this.context(1);
+      c.fillStyle = this[_].palette[this[_].color][c1.color];
       c.fillRect(left * c1.scaleX + c1.offset,
                  top * c1.scaleY,
                  width * c1.scaleX,
                  height * c1.scaleY);
-      var c2 = this.context(2);
+      const c2 = this.context(2);
+      c.fillStyle = this[_].palette[this[_].color][c2.color];
       c.fillRect(left * c2.scaleX + c2.offset,
                  top * c2.scaleY,
                  width * c2.scaleX,
                  height * c2.scaleY);
     } else {
-      var context = this.context(0);
+      const context = this.context(0);
+      c.fillStyle = this[_].palette[this[_].color][context.color];
       c.fillRect(left * context.scaleX + context.offset,
                  top * context.scaleY,
                  width * context.scaleX,
@@ -391,8 +420,7 @@ class Magic2 {
     fg.canvas.style.display = 'block';
     const bg = this[_].contexts[this[_].bgcontext];
     bg.canvas.style.display = 'none';
-    bg.fillStyle = this[_].palette[0];
-    bg.fillRect(0, 0, bg.canvas.width, bg.canvas.height);
+    bg.clearRect(0, 0, bg.canvas.width, bg.canvas.height);
   }
 
   color (color) {
