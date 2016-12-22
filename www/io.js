@@ -129,7 +129,6 @@
   c.textBaseline = 'middle';
 
   window.io_set_mode = function (mode) {
-    // TODO: Support dynamic mode change correctly.
     vr = mode;
     context = magic2.context(vr ? 1 : 0);
     scaleX = c.canvas.height / 256 * context.aspect;
@@ -141,6 +140,9 @@
     fontHeight = (6 * scaleY * fontScale) | 0;
     fontHalfHeight = (fontHeight / 2) | 0;
     c.font = fontHeight + 'px \'Geo\'';
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+
   };
 
   window.io_graphic_data = function(page, index, color) {
