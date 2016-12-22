@@ -6,6 +6,11 @@
 /* global navigator */
 /* global performance */
 (function() {
+  window.addEventListener('deviceorientation', function(e) {
+    if (e.alpha)
+      magic2.orientation(e.alpha, e.beta, e.gamma);
+  }, false);
+
   var touchbits = 0xff;
   var touches = {
     esc: {

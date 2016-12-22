@@ -55,7 +55,7 @@ const V_COLOR = 2;
  */
 const mem_read_u16be = function (memory, addr) {
   return (memory[addr] << 8) | memory[addr + 1];
-}
+};
 
 /**
  * Decodes a signed 16-bit number in big endian.
@@ -68,7 +68,99 @@ const mem_read_s16be = function (memory, addr) {
   if (u16be < 0x8000)
     return u16be;
   return u16be - 0x10000;
-}
+};
+
+const translate = {
+  x: 0.0,
+  y: 0.0,
+  z: 0.0,
+  dx: 0.0,
+  dy: 0.0,
+  dz: 0.0,
+  m: [[ 0.0, 0.0, 0.0, 0.0 ],
+      [ 0.0, 0.0, 0.0, 0.0 ],
+      [ 0.0, 0.0, 0.0, 0.0 ]],
+
+  setup: function (parameters, position, minz) {
+    this.dx = parameters[P_DX];
+    this.dy = parameters[P_DY];
+    this.dz = parameters[P_DZ];
+
+    const math = Math;
+    const cx = parameters[P_CX] - position;
+    const cy = parameters[P_CY];
+    const cz = parameters[P_CZ];
+    const rh = parameters[P_HEAD] / 180 * math.PI;
+    const rp = parameters[P_PITCH] / 180 * math.PI;
+    const rb = parameters[P_BANK] / 180 * math.PI;
+    const ch = math.cos(rh);
+    const cp = math.cos(rp);
+    const cb = math.cos(rb);
+    const sh = math.sin(rh);
+    const sp = math.sin(rp);
+    const sb = math.sin(rb);
+    this.m[0][0] = sh * sp * sb + ch * cb;
+    this.m[0][1] = sb * cp;
+    this.m[0][2] = ch * sp * sb - sh * cb;
+    this.m[0][3] = this.dx + cx;
+    this.m[1][0] = sh * sp * cb - sb * ch;
+    this.m[1][1] = cp * cb;
+    this.m[1][2] = ch * sp * cb + sh * sb;
+    this.m[1][3] = this.dy + cy;
+    this.m[2][0] = sh * cp;
+    this.m[2][1] = -sp;
+    this.m[2][2] = ch * cp;
+    this.m[2][3] = this.dz + cz + minz;
+  },
+
+  convert: function (sx, sy, sz) {
+    const x = sx - this.dx;
+    const y = sy - this.dy;
+    const z = sz - this.dz;
+    const m = this.m;
+    this.x = m[0][0] * x + m[0][1] * y + m[0][2] * z + m[0][3];
+    this.y = m[1][0] * x + m[1][1] * y + m[1][2] * z + m[1][3];
+    this.z = m[2][0] * x + m[2][1] * y + m[2][2] * z + m[2][3];
+  }
+};
+
+const camera = {
+  x: 0.0,
+  y: 0.0,
+  z: 0.0,
+  m: [[ 0.0, 0.0, 0.0 ],
+      [ 0.0, 0.0, 0.0 ],
+      [ 0.0, 0.0, 0.0 ]],
+
+  setup: function (alpha, beta, gamma) {
+    const math = Math;
+    const a = beta / 180 * math.PI * ((gamma < 0) ? -1 : 1);
+    const b = (gamma + 90) / 180 * math.PI * ((gamma < 0) ? 1 : -1);
+    const c = alpha / 180 * math.PI;
+    const ca = math.cos(a);
+    const cb = math.cos(b);
+    const cc = math.cos(c);
+    const sa = math.sin(a);
+    const sb = math.sin(b);
+    const sc = math.sin(c);
+    this.m[0][0] = -sa * sb * sc + ca * cc;
+    this.m[0][1] = -sa * cb;
+    this.m[0][2] =  sa * sb * cc + ca * sc;
+    this.m[1][0] =  ca * sb * sc + sa * cc;
+    this.m[1][1] =  ca * cb;
+    this.m[1][2] = -ca * sb * cc + sa * sc;
+    this.m[2][0] = -cb * sc;
+    this.m[2][1] =  sb;
+    this.m[2][2] =  cb * cc;
+  },
+
+  convert: function (x, y, z) {
+    const m = this.m;
+    this.x = m[0][0] * x + m[0][1] * y + m[0][2] * z;
+    this.y = m[1][0] * x + m[1][1] * y + m[1][2] * z;
+    this.z = m[2][0] * x + m[2][1] * y + m[2][2] * z;
+  }
+};
 
 class Magic2 {
   // constructor
@@ -81,6 +173,12 @@ class Magic2 {
         y: 0,
         w: 0,
         h: 0
+      },
+      orientation: {
+        alpha: 0.0,
+        beta: 0.0,
+        gamma: -90.0,
+        baseAlpha: undefined
       },
       depth: {
         minz: 50,
@@ -134,49 +232,28 @@ class Magic2 {
         palette.cr = 'rgba(0,0,' + palette.l + ',1.0)';
       }.bind(this),
       draw: function (context) {
-        // FIXME: Use const for var other than 'i', and use let for 'i'.
-
-        // Rotate and translate
-        var math = Math;
         var src = this[_].data.vertices;
         var pctx3 = this[_].data.pct * 3;
         var vertices = this[_].translate.vertices;
-        var cx = this[_].parameters[P_CX] - context.position;
-        var cy = this[_].parameters[P_CY];
-        var cz = this[_].parameters[P_CZ];
-        var dx = this[_].parameters[P_DX];
-        var dy = this[_].parameters[P_DY];
-        var dz = this[_].parameters[P_DZ];
-        var rh = this[_].parameters[P_HEAD] / 180 * math.PI;
-        var rp = this[_].parameters[P_PITCH] / 180 * math.PI;
-        var rb = this[_].parameters[P_BANK] / 180 * math.PI;
-        var ch = math.cos(rh);
-        var cp = math.cos(rp);
-        var cb = math.cos(rb);
-        var sh = math.sin(rh);
-        var sp = math.sin(rp);
-        var sb = math.sin(rb);
-        var m11 = sh * sp * sb + ch * cb;
-        var m12 = sb * cp;
-        var m13 = ch * sp * sb - sh * cb;
-        var m14 = dx + cx;
-        var m21 = sh * sp * cb - sb * ch;
-        var m22 = cp * cb;
-        var m23 = ch * sp * cb + sh * sb;
-        var m24 = dy + cy;
-        var m31 = sh * cp;
-        var m32 = -sp;
-        var m33 = ch * cp;
-        var m34 = dz + cz + this[_].depth.minz;
+        translate.setup(this[_].parameters, context.position, this[_].depth.minz);
         var i;
         for (i = 0; i < pctx3; i += 3) {
-          var x = src[i + 0] - dx;
-          var y = src[i + 1] - dy;
-          var z = src[i + 2] - dz;
-          vertices[i + 0] = m11 * x + m12 * y + m13 * z + m14;
-          vertices[i + 1] = m21 * x + m22 * y + m23 * z + m24;
-          vertices[i + 2] = m31 * x + m32 * y + m33 * z + m34;
+          translate.convert(src[i + 0], src[i + 1], src[i + 2]);
+          vertices[i + 0] = translate.x;
+          vertices[i + 1] = translate.y;
+          vertices[i + 2] = translate.z;
         }
+        if (this.vr()) {
+          var orientation = this[_].orientation;
+          camera.setup(orientation.alpha + context.alpha, orientation.beta, orientation.gamma);
+          for (i = 0; i < pctx3; i += 3) {
+            camera.convert(vertices[i + 0], vertices[i + 1], vertices[i + 2]);
+            vertices[i + 0] = camera.x;
+            vertices[i + 1] = camera.y;
+            vertices[i + 2] = camera.z;
+          }
+        }
+
         // Perspective
         var maxz = this[_].depth.maxz;
         for (i = 0; i < pctx3; i += 3) {
@@ -231,7 +308,6 @@ class Magic2 {
       context.clearRect(0, 0, fg.canvas.width, fg.canvas.height);
       context.globalCompositeOperation = 'lighter';
     }
-    this.vr(2);
   }
 
   palette (index, color) {
@@ -258,6 +334,15 @@ class Magic2 {
     return result;
   }
 
+  orientation (alpha, beta, gamma) {
+    const orientation = this[_].orientation;
+    if (orientation.baseAlpha === undefined)
+      orientation.baseAlpha = alpha;
+    orientation.alpha = alpha - orientation.baseAlpha;
+    orientation.beta = beta;
+    orientation.gamma = gamma;
+  }
+
   context(mode) {
     const split = this[_].vr == V_SPLIT;
     const c = this[_].contexts[0].canvas;
@@ -271,6 +356,7 @@ class Magic2 {
       width: width,
       offset: base + (width - (c.height * aspect)) / 2,
       position: mode == 0 ? 0 : mode == 1 ? -10 : 10,
+      alpha: mode == 0 ? 0 : mode == 1 ? -2 : 2,
       aspect: aspect,
       scaleX: c.height / 256 * aspect,
       scaleY: c.height / 256
