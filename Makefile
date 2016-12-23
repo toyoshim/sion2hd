@@ -2,7 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-WWW	= www/sion2.js www/sion2.data www/sion2.html.mem www/zmusic.js
+WWW	= www/sion2.js www/sion2.data www/sion2.html.mem www/zmusic.js \
+	  www/magic2.js
 OUT	= out
 TARGET	= $(OUT)/sion2.html
 DEPEND	= $(OUT)/depend
@@ -62,6 +63,9 @@ $(OUT)/%.o: $(RUN68)/%.c
 all: $(DEPEND) $(WWW)
 
 www/zmusic.js: third_party/z-music.js/dist/zmusic.js
+	cp $< $@
+
+www/magic2.js: third_party/magic2.js/magic2.js
 	cp $< $@
 
 www/%: $(TARGET)

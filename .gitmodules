@@ -1,3 +1,6 @@
 [submodule "third_party/z-music.js"]
 	path = third_party/z-music.js
 	url = https://github.com/toyoshim/z-music.js.git
+[submodule "third_party/magic2.js"]
+	path = third_party/magic2.js
+	url = https://github.com/toyoshim/magic2.js.git
