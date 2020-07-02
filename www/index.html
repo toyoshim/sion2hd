@@ -176,6 +176,7 @@
               ZMUSIC.connect(reverb);
             Module._set_slow_mode(config.slowMode());
             magic2.vr(config.videoMode());
+            window.io_set_mode(config.videoMode());
           };
           Module.addRunDependency("config");
           config.ready.then(function() {
