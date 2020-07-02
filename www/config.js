@@ -189,6 +189,10 @@ window.config = {
       window.config.onupdate();
   },
 
+  draw: function() {
+    draw();
+  },
+
   useSound: function() {
     return options['sound'].i != 0;
   },
