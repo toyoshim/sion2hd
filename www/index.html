@@ -143,9 +143,9 @@
         preInit: function() {
           Module.addRunDependency("zmusic");
           Promise.all([
-              ZMUSIC.install(['ZMUSIC110.X', '-n', '-u', '-t256', '-w256'], {
-                context: audioContext
-              }),
+              ZMUSIC.install(
+                  ['ZMUSIC110.X', '-n', '-u', '-t256', '-p400', '-w256'],
+                  { context: audioContext }),
               xhr('sion2/NEIRO.ZMS'),
               xhr('sion2/SION2.ZPD')
           ]).then(results => {
@@ -168,6 +168,7 @@
           });
           config.onupdate = function() {
             ZMUSIC.disconnect();
+            ZMUSIC.resume();
             if (config.useSound())
               ZMUSIC.connect(audioContext.destination);
             if (config.useReverb())

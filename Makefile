@@ -2,8 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-WWW	= www/sion2.js www/sion2.data www/sion2.html.mem www/zmusic.js \
-	  www/magic2.js
+WWW	= www/sion2.js www/sion2.data www/sion2.wasm www/zmusic.js \
+	  www/zmusic.wasm www/magic2.js
 OUT	= out
 TARGET	= $(OUT)/sion2.html
 DEPEND	= $(OUT)/depend
@@ -16,7 +16,7 @@ DEFS	= -DFNC_TRACE -DENV_FROM_INI
 CFLAGS	= $(DEFS) -Oz -include $(MOD68)/preinc.h -I $(RUN68)
 EXPORTS	= -s EXPORTED_FUNCTIONS="['_main', '_set_slow_mode']"
 JSLIBS	= --js-library $(SION2)/runtime68.js
-LDFLAGS	= -lm -Oz $(JSLIBS) --preload-file $(XFILE) $(EXPORTS)
+LDFLAGS	= -lm -lidbfs.js -Oz $(JSLIBS) --preload-file $(XFILE) $(EXPORTS)
 SRCS	= \
 	$(RUN68)/ansicolor-w32.c \
 	$(RUN68)/calc.c \
@@ -63,6 +63,9 @@ $(OUT)/%.o: $(RUN68)/%.c
 all: $(DEPEND) $(WWW)
 
 www/zmusic.js: third_party/z-music.js/dist/zmusic.js
+	cp $< $@
+
+www/zmusic.wasm: third_party/z-music.js/dist/zmusic.wasm
 	cp $< $@
 
 www/magic2.js: third_party/magic2.js/magic2.js
