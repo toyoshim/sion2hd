@@ -105,8 +105,10 @@ var update = function() {
     strings[option.entries[i]].on = i == item;
   if (up | down | left | right)
     draw();
-  if (left | right)
+  if (left | right) {
     window.config.onupdate();
+    draw();
+  }
   if (optionKeys[select] == 'exit' &&
       (window.iocs_bitsns(5) & (1 << 2)) || (joy & 0x60) != 0x60) {
     window.config.hide();
@@ -114,28 +116,33 @@ var update = function() {
 };
 
 var strings = {
-  title1:  { on:  true, x: 10, y:  3, text: 'SION\x5b HD' },
-  title2:  { on:  true, x:  9, y:  5, text: '- OPTIONS -' },
-  sounds:  { on:  true, x:  7, y:  8, text: 'SOUND EMULATION' },
-  sound1:  { on:  true, x:  7, y: 10, text: '      OFF      ' },
-  sound2:  { on: false, x:  7, y: 10, text: '   X68SOUND    ' },
-  sound3:  { on: false, x:  7, y: 10, text: 'X68SOUND+REVERB' },
-  speeds:  { on:  true, x:  9, y: 13, text: 'GAME SPEED' },
-  speed1:  { on:  true, x: 10, y: 15, text: ' NORMAL  ' },
-  speed2:  { on:  true, x: 10, y: 15, text: '  SLOW   ' },
-  speed3:  { on:  true, x: 10, y: 15, text: 'VERY SLOW' },
-  options: { on:  true, x:  8, y: 18, text: 'SKIP OPTIONS' },
-  option1: { on:  true, x: 13, y: 20, text: 'OFF' },
-  option2: { on: false, x: 13, y: 20, text: 'ON ' },
-  exit:    { on:  true, x: 12, y: 23, text: 'EXIT' },
-  copy1:   { on:  true, x:  9, y: 28, text: '2016\x22DEC SION\x5b HD' },
+  title1:  { on:  true, x:  9, y:  1, text: '- OPTIONS -' },
+  videos:  { on:  true, x:  8, y:  4, text: 'GRAPHIC MODE' },
+  video1:  { on:  true, x:  8, y:  6, text: '   NORMAL   ' },
+  video2:  { on: false, x:  8, y:  6, text: '     VR     ' },
+  video3:  { on: false, x:  8, y:  6, text: '    VBOY    ' },
+  sounds:  { on:  true, x:  7, y:  9, text: 'SOUND EMULATION' },
+  sound1:  { on:  true, x:  7, y: 11, text: '      OFF      ' },
+  sound2:  { on: false, x:  7, y: 11, text: '   X68SOUND    ' },
+  sound3:  { on: false, x:  7, y: 11, text: 'X68SOUND+REVERB' },
+  speeds:  { on:  true, x:  9, y: 14, text: 'GAME SPEED' },
+  speed1:  { on:  true, x: 10, y: 16, text: ' NORMAL  ' },
+  speed2:  { on: false, x: 10, y: 16, text: '  SLOW   ' },
+  speed3:  { on: false, x: 10, y: 16, text: 'VERY SLOW' },
+  options: { on:  true, x:  8, y: 19, text: 'SKIP OPTIONS' },
+  option1: { on:  true, x: 13, y: 21, text: 'OFF' },
+  option2: { on: false, x: 13, y: 21, text: 'ON ' },
+  exit:    { on:  true, x: 12, y: 25, text: 'EXIT' },
+  copy1:   { on:  true, x:  9, y: 28, text: '2016,2020 SION\x5b HD' },
   copy2:   { on:  true, x:  4, y: 29, text: 'BY TOYOSHIMA-HOUSE' },
 };
 
-var optionKeys = ['sound', 'speed', 'option', 'exit'];
+var optionKeys = ['video', 'sound', 'speed', 'option', 'exit'];
 var options = {
+  video: {
+    y: strings['videos'].y, i: 0, entries: ['video1', 'video2', 'video3'] },
   sound: {
-    y: strings['sounds'].y, i: 0, entries: ['sound1', 'sound2', 'sound3'] },
+    y: strings['sounds'].y, i: 2, entries: ['sound1', 'sound2', 'sound3'] },
   speed: {
     y: strings['speeds'].y, i: 1, entries: ['speed1', 'speed2', 'speed3'] },
   option: { y: strings['options'].y, i: 0, entries: ['option1', 'option2'] },
@@ -201,6 +208,9 @@ window.config = {
   },
   slowMode: function() {
     return options['speed'].i;
+  },
+  videoMode: function() {
+    return options['video'].i;
   },
   shown: false,
   onupdate: null
