@@ -1,5 +1,7 @@
 out/
 www/sion2.data
-www/sion2.html.mem
 www/sion2.js
+www/sion2.wasm
+www/magic2.js
 www/zmusic.js
+www/zmusic.wasm
