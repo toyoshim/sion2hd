@@ -259,6 +259,7 @@
         keyStates[8] |= (1 << 4);  // Num 8
         break;
       case 'Escape':
+      case 'KeyO':
         keyStates[0] |= (1 << 1);
         break;
       case 'F1':
@@ -322,6 +323,7 @@
         keyStates[8] &= ~(1 << 4);  // Num 8
         break;
       case 'Escape':
+      case 'KeyO':
         keyStates[0] &= ~(1 << 1);
         break;
       case 'F1':
