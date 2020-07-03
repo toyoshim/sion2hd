@@ -43,7 +43,7 @@ var draw = function() {
   for (var i = 0; i < optionKeys.length; ++i)
     putc(5, options[optionKeys[i]].y, ' ');
   putc(5, options[optionKeys[select]].y, '>');
-  if (magic2.vr()) {
+  if (window.config.videoMode()) {
     window.bg_update(context, 1, magic2.context(1));
     window.bg_update(context, 1, magic2.context(2));
   } else {
@@ -107,6 +107,7 @@ var update = function() {
     draw();
   if (left | right) {
     window.config.onupdate();
+    magic2.vr(window.config.videoMode());
     draw();
   }
   if (optionKeys[select] == 'exit' &&
@@ -165,6 +166,7 @@ window.config = {
         strings[options[key].entries[i]].on = i == options[key].i;
     }
     document.fonts.ready.then(function() {
+      magic2.vr(window.config.videoMode());
       draw();
       if (options['option'].i == 0) {
         resolver = resolve;
@@ -194,6 +196,7 @@ window.config = {
       window.Module.resumeMainLoop();
     if (window.config.onupdate)
       window.config.onupdate();
+    magic2.vr(window.config.videoMode());
   },
 
   draw: function() {
