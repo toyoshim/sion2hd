@@ -168,32 +168,6 @@
     return status;
   };
 
-  var EdgeKeyToCode = function(key) {
-    switch (key) {
-      case 'Down':
-      case 'Left':
-      case 'Right':
-      case 'Up':
-        return 'Arrow' + key;
-      case 'Esc':
-        return 'Escape';
-      case 'v':
-        return 'KeyV';
-      case 'x':
-        return 'KeyX';
-      case 'z':
-        return 'KeyZ';
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-        return 'Digit' + key;
-      default:
-        return key;
-    }
-  }
-
   var SafariWhichToCode = function (which) {
     switch (which) {
       case 27:
@@ -233,9 +207,7 @@
   // ESC, F1-F5
   window.addEventListener('keydown', function(e) {
     if (!e.code) {
-      if (e.key)
-        e.code = EdgeKeyToCode(e.key);
-      else
+      if (e.which)
         e.code = SafariWhichToCode(e.which);
     }
     switch (e.code) {
@@ -297,9 +269,7 @@
 
   window.addEventListener('keyup', function(e) {
     if (!e.code) {
-      if (e.key)
-        e.code = EdgeKeyToCode(e.key);
-      else
+      if (e.which)
         e.code = SafariWhichToCode(e.which);
     }
     switch (e.code) {
