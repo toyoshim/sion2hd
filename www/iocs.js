@@ -411,8 +411,20 @@
   magic2.vsync(function(c, contexts) {
     if (!sprite)
       return;
+    for (let i = 0; i < 128; ++i) {
+      const s = sprites[i];
+      if (s.id == 0 || s.id == 1) {
+        // 2x2 / 1x1 star
+        const x = s.x - 12;
+        const y = s.y - 12;
+        const z = 10000 - Math.abs(128 - y) * 100;
+        const r = s.id ? 0.3 : 1.0;
+        const d = z / 256;
+        magic2.point3d(x * d, y * d, z, r);
+      }
+    }
+    // TODO: Update following code to use magic2 extra call.
     for (let context of contexts) {
-      var scaleWideX = context.width / 256;
       var scaleX = c.canvas.height / 256 * context.aspect;
       var scaleY = c.canvas.height / 256;
       var offsetX = context.offset;
@@ -423,14 +435,8 @@
         var x = s.x - 16;
         var y = s.y - 16;
         switch (s.id) {
-          case 0:  // 2x2 star
-          case 1:  // 1x1 star
-            c.fillStyle = magic2.palette(15)[context.color];
-            c.fillRect(
-                (x + 4) * scaleWideX + context.base,
-                (y + 4) * scaleY,
-                s.id ? 1 : 2,
-                s.id ? 1 : 2);
+          case 0:
+          case 1:
             continue;
           case 7: {  // scope
             var scale = 1 + (s.tick++ % 10) / 10;
