@@ -42,7 +42,7 @@
     for (var i = 0; i < e.changedTouches.length; ++i) {
       var touch = e.changedTouches[i];
       if (touch.clientY < (h / 3)) {
-        if (touch.clientX < (w * 1 / 3)) {
+        if (touch.clientX > (w * 2 / 3)) {
           touches.esc.id = touch.identifier;
           touches.esc.pressed = true;
         } else if (touch.clientX < (w * 2 / 3)) {
@@ -399,10 +399,12 @@
     if (!pad)
       return touchbits;
     var bits = 0xff;
-    var x = pad.axes[0] || 0;
-    var y = pad.axes[1] || 0;
-    var a = pad.buttons[0] && pad.buttons[0].pressed;
-    var b = pad.buttons[1] && pad.buttons[1].pressed;
+    var x = pad.axes[0] || pad.axes[2] || 0;
+    var y = pad.axes[1] || pad.axes[3] || 0;
+    var a = (pad.buttons[0] && pad.buttons[0].pressed) ||
+        (pad.buttons[5] && pad.buttons[5].pressed);
+    var b = (pad.buttons[1] && pad.buttons[1].pressed) ||
+        (pad.buttons[6] && pad.buttons[6].pressed);
     if (pad.buttons[2] && pad.buttons[2].pressed && !magic2.vr()) {
         magic2.vr(true);
         window.io_set_mode(true);

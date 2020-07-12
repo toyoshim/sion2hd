@@ -53,8 +53,9 @@ var draw = function() {
 
 var keys = { up: false, down: false, left: false, right: false };
 
-var update = function() {
-  requestAnimationFrame(update);
+var update = function(time) {
+  if (time)
+    requestAnimationFrame(update, 'config');
   if (!window.config.shown && opacity != 0) {
     opacity -= 5;
     document.getElementById('bg2').style.opacity = opacity / 100;
@@ -117,28 +118,26 @@ var update = function() {
 };
 
 var strings = {
-  title1:  { on:  true, x:  9, y:  1, text: '- OPTIONS -' },
-  videos:  { on:  true, x:  8, y:  4, text: 'GRAPHIC MODE' },
-  video1:  { on:  true, x:  8, y:  6, text: '   NORMAL   ' },
-  video2:  { on: false, x:  8, y:  6, text: '     VR     ' },
-  video3:  { on: false, x:  8, y:  6, text: '    VBOY    ' },
-  sounds:  { on:  true, x:  7, y:  9, text: 'SOUND EMULATION' },
-  sound1:  { on:  true, x:  7, y: 11, text: '      OFF      ' },
-  sound2:  { on: false, x:  7, y: 11, text: '   X68SOUND    ' },
-  sound3:  { on: false, x:  7, y: 11, text: 'X68SOUND+REVERB' },
-  speeds:  { on:  true, x:  9, y: 14, text: 'GAME SPEED' },
-  speed1:  { on:  true, x: 10, y: 16, text: ' NORMAL  ' },
-  speed2:  { on: false, x: 10, y: 16, text: '  SLOW   ' },
-  speed3:  { on: false, x: 10, y: 16, text: 'VERY SLOW' },
-  options: { on:  true, x:  8, y: 19, text: 'SKIP OPTIONS' },
-  option1: { on:  true, x: 13, y: 21, text: 'OFF' },
-  option2: { on: false, x: 13, y: 21, text: 'ON ' },
-  exit:    { on:  true, x: 12, y: 25, text: 'EXIT' },
-  copy1:   { on:  true, x:  9, y: 28, text: '2016,2020 SION\x5b HD' },
-  copy2:   { on:  true, x:  4, y: 29, text: 'BY TOYOSHIMA-HOUSE' },
+  title1:  { on:  true, x: 4, y:  1, text: '- SION\x5b HDX OPTIONS -' },
+  videos:  { on:  true, x: 6, y:  6, text: 'GRAPHICS -------*' },
+  video1:  { on:  true, x: 8, y:  8, text: 'NORMAL  ' },
+  video2:  { on: false, x: 8, y:  8, text: 'VR SPLIT' },
+  video3:  { on: false, x: 8, y:  8, text: 'VR COLOR' },
+  sounds:  { on:  true, x: 6, y: 11, text: 'SOUND ----------*' },
+  sound1:  { on:  true, x: 8, y: 13, text: 'OFF            ' },
+  sound2:  { on: false, x: 8, y: 13, text: 'X68SOUND       ' },
+  sound3:  { on: false, x: 8, y: 13, text: 'X68SOUND+REVERB' },
+  speeds:  { on:  true, x: 6, y: 16, text: 'GAME SPEED -----*' },
+  speed1:  { on:  true, x: 8, y: 18, text: '60FPS' },
+  speed2:  { on: false, x: 8, y: 18, text: '30FPS' },
+  speed3:  { on: false, x: 8, y: 18, text: '15FPS' },
+  split:   { on:  true, x: 6, y: 21, text: '----------------*' },
+  exit:    { on:  true, x: 6, y: 24, text: 'EXIT OPTIONS' },
+  copy1:   { on:  true, x: 7, y: 28, text: '2016,2020 SION\x5b HDX' },
+  copy2:   { on:  true, x: 4, y: 29, text: 'BY TOYOSHIMA-HOUSE' },
 };
 
-var optionKeys = ['video', 'sound', 'speed', 'option', 'exit'];
+var optionKeys = ['video', 'sound', 'speed', 'exit'];
 var options = {
   video: {
     y: strings['videos'].y, i: 0, entries: ['video1', 'video2', 'video3'] },
@@ -146,14 +145,18 @@ var options = {
     y: strings['sounds'].y, i: 2, entries: ['sound1', 'sound2', 'sound3'] },
   speed: {
     y: strings['speeds'].y, i: 1, entries: ['speed1', 'speed2', 'speed3'] },
-  option: { y: strings['options'].y, i: 0, entries: ['option1', 'option2'] },
   exit: { y: strings['exit'].y, i: 0, entries: [] },
 };
 
-var select = 0;
+var select = 3;
 var opacity = 0;
 var resolver = null;
 var paused = false;
+var xr = false;
+var startResolver = null;
+var startPromise = new Promise((resolve, reject) => {
+  startResolver = resolve;
+});
 
 window.config = {
   ready: new Promise(function(resolve, reject) {
@@ -165,18 +168,30 @@ window.config = {
       for (var i = 0; i < options[key].entries.length; ++i)
         strings[options[key].entries[i]].on = i == options[key].i;
     }
-    document.fonts.ready.then(function() {
+    Promise.all([document.fonts.ready, startPromise]).then(function() {
       magic2.vr(window.config.videoMode());
       draw();
-      if (options['option'].i == 0) {
-        resolver = resolve;
-        window.config.shown = true;
-      } else {
-        resolve();
-      }
-      requestAnimationFrame(update);
+      resolver = resolve;
+      window.config.shown = true;
+      requestAnimationFrame(update, 'config');
     });
   }),
+
+  start: function() {
+    if (startResolver)
+      startResolver();
+    startResolver = null;
+  },
+
+  enableXR: function() {
+    xr = true;
+    strings.video1.text = "WEB XR  ";
+    strings.video1.on = true;
+    strings.video2.on = strings.video3.on = false;
+    options.video.i = 0;
+    options.video.entries = ['video1'];
+    draw();
+  },
 
   show: function() {
     window.config.shown = true;
@@ -213,6 +228,8 @@ window.config = {
     return options['speed'].i;
   },
   videoMode: function() {
+    if (xr)
+      return 1;
     return options['video'].i;
   },
   shown: false,

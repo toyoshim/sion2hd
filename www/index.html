@@ -26,6 +26,7 @@
         display: block;
         border: 0px none;
         position: absolute;
+        _position: relative;
         left: 0px;
         top: 0px;
       }
@@ -34,18 +35,60 @@
         height: 0;
         border: 0;
       }
+      button {
+        display: none;
+        position: absolute;
+        right: 16px;
+        bottom: 16px;
+        float: right;
+        z-index: 5;
+        padding: 0.1em 0.5em;
+        background: #000;
+        color: #fff;
+        font-family: 'Geo';
+        font-size: 16pt;
+      }
     </style>
   </head>
   <body>
     <div>
       <canvas id="graphic0" style="z-index: 0;"></canvas>
       <canvas id="graphic1" style="z-index: 1;"></canvas>
-      <canvas id="graphic2" style="z-index: 2;"></canvas>
-      <canvas id="graphic3" style="z-index: 3;"></canvas>
-      <canvas id="bg2" style="z-index: 4;"></canvas>
+      <canvas id="graphic2" style="z-index: 2;"></canvas> <!-- for io.js -->
+      <canvas id="bg2" style="z-index: 3;"></canvas> <!-- for config.js -->
+      <canvas id="xr" style="z-index: 4;"></canvas> <!-- for WebXR -->
+      <button onclick="xr()">WebXR (experimental)</button>
     </div>
     <script type="text/javascript" charset="UTF-8" src="magic2.js"></script>
     <script type='text/javascript'>
+      const rAF = window.requestAnimationFrame;
+      let rAF_main_lastId = 0;
+      let rAF_config_lastId = 0;
+      let rAF_config_callback = null;
+      window.requestAnimationFrame = (callback, caller) => {
+        const id = rAF(callback);
+        if (caller == 'config') {
+          rAF_config_lastId = id;
+          rAF_config_callback = callback;
+        } else {
+          rAF_main_lastId = id;
+        }
+      };
+
+      const xr = () => {
+        window.cancelAnimationFrame(rAF_main_lastId);
+        window.cancelAnimationFrame(rAF_config_lastId);
+        Browser.requestAnimationFrame = () => {};
+        magic2.xr(true, function () {
+          if (Browser.mainLoop.runner)  /* global Browser */
+            Browser.mainLoop.runner();
+          if (rAF_config_callback)
+            rAF_config_callback(0.0);
+        });
+        config.enableXR();
+        document.getElementsByTagName('button')[0].style.display = 'none';
+      };
+
       var xhr = function(url) {
         return new Promise(function (resolve, reject) {
           var xhr = new XMLHttpRequest();
@@ -68,6 +111,8 @@
         // Changes canvas size to fullfill the window.
         c.width = window.innerWidth;
         c.height = window.innerHeight;
+        if (c.id === 'xr')
+          return null;
         return c.getContext('2d');
       }));
 
@@ -77,14 +122,14 @@
           c.width = window.innerWidth;
           c.height = window.innerHeight;
           window.io_set_mode(magic2.vr());
-          config.draw();
+          config.draw(); /* global config */
         });
       }, false);
 
       var zmd = {};
       var se = {};
       var zmdPending = 0;
-      var audioContext = new (window.AudioContext || webkitAudioContext);
+      var audioContext = new (window.AudioContext || window.webkitAudioContext);
       var reverb = audioContext.createConvolver();
       reverb.connect(audioContext.destination);
       xhr('ir.wav').then(data =>
@@ -150,6 +195,9 @@
               xhr('sion2/NEIRO.ZMS'),
               xhr('sion2/SION2.ZPD')
           ]).then(results => {
+            if (navigator.xr)
+              document.getElementsByTagName('button')[0].style.display = 'block';
+            window.config.start();
             if (navigator.userAgent.indexOf('iPhone') >= 0) {
               document.addEventListener('touchstart', e => {
                 ZMUSIC.compileAndPlay(results[1]);
@@ -175,7 +223,6 @@
             if (config.useReverb())
               ZMUSIC.connect(reverb);
             Module._set_slow_mode(config.slowMode());
-            magic2.vr(config.videoMode());
             window.io_set_mode(config.videoMode());
           };
           Module.addRunDependency("config");

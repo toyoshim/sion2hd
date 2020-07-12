@@ -142,7 +142,6 @@
     c.font = fontHeight + 'px \'Geo\'';
     c.textAlign = 'center';
     c.textBaseline = 'middle';
-
   };
 
   window.io_graphic_data = function(page, index, color) {
