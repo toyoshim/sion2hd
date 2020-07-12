@@ -385,11 +385,7 @@
       contrast.now++;
     else
       contrast.now--;
-    var canvas = document.getElementsByTagName('canvas');
-    Array.prototype.map.call(canvas, function (c) {
-      if (c.id != 'bg2')
-        c.style.opacity = contrast.now / 15;
-    });
+    magic2.contrast(contrast.now);
   });
 
   window.iocs_joyget = function (id) {
