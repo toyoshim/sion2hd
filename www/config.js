@@ -124,13 +124,13 @@ var strings = {
   video2:  { on: false, x: 8, y:  8, text: 'VR SPLIT' },
   video3:  { on: false, x: 8, y:  8, text: 'VR COLOR' },
   sounds:  { on:  true, x: 6, y: 11, text: 'SOUND ----------*' },
-  sound1:  { on:  true, x: 8, y: 13, text: 'OFF            ' },
+  sound1:  { on: false, x: 8, y: 13, text: 'OFF            ' },
   sound2:  { on: false, x: 8, y: 13, text: 'X68SOUND       ' },
-  sound3:  { on: false, x: 8, y: 13, text: 'X68SOUND+REVERB' },
+  sound3:  { on:  true, x: 8, y: 13, text: 'X68SOUND+REVERB' },
   speeds:  { on:  true, x: 6, y: 16, text: 'GAME SPEED -----*' },
-  speed1:  { on:  true, x: 8, y: 18, text: '60FPS' },
+  speed1:  { on: false, x: 8, y: 18, text: '60FPS' },
   speed2:  { on: false, x: 8, y: 18, text: '30FPS' },
-  speed3:  { on: false, x: 8, y: 18, text: '15FPS' },
+  speed3:  { on:  true, x: 8, y: 18, text: '15FPS' },
   split:   { on:  true, x: 6, y: 21, text: '----------------*' },
   exit:    { on:  true, x: 6, y: 24, text: 'EXIT OPTIONS' },
   copy1:   { on:  true, x: 6, y: 28, text: '2016,2020 SION\x5b HDX' },
@@ -144,7 +144,7 @@ var options = {
   sound: {
     y: strings['sounds'].y, i: 2, entries: ['sound1', 'sound2', 'sound3'] },
   speed: {
-    y: strings['speeds'].y, i: 1, entries: ['speed1', 'speed2', 'speed3'] },
+    y: strings['speeds'].y, i: 2, entries: ['speed1', 'speed2', 'speed3'] },
   exit: { y: strings['exit'].y, i: 0, entries: [] },
 };
 

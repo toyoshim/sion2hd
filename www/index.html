@@ -224,6 +224,7 @@
               ZMUSIC.connect(reverb);
             Module._set_slow_mode(config.slowMode());
             window.io_set_mode(config.videoMode());
+            document.getElementsByTagName('button')[0].style.display = 'none';
           };
           Module.addRunDependency("config");
           config.ready.then(function() {
