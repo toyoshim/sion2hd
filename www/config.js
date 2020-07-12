@@ -133,7 +133,7 @@ var strings = {
   speed3:  { on: false, x: 8, y: 18, text: '15FPS' },
   split:   { on:  true, x: 6, y: 21, text: '----------------*' },
   exit:    { on:  true, x: 6, y: 24, text: 'EXIT OPTIONS' },
-  copy1:   { on:  true, x: 7, y: 28, text: '2016,2020 SION\x5b HDX' },
+  copy1:   { on:  true, x: 6, y: 28, text: '2016,2020 SION\x5b HDX' },
   copy2:   { on:  true, x: 4, y: 29, text: 'BY TOYOSHIMA-HOUSE' },
 };
 

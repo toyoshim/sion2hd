@@ -442,77 +442,79 @@
   }
   var sprite = false;
 
-  magic2.vsync(function(c, context) {
+  magic2.vsync(function(c, contexts) {
     if (!sprite)
       return;
-    var scaleWideX = context.width / 256;
-    var scaleX = c.canvas.height / 256 * context.aspect;
-    var scaleY = c.canvas.height / 256;
-    var offsetX = context.offset;
-    for (var i = 0; i < 128; ++i) {
-      var s = sprites[i];
-      if (!s.show)
-        continue;
-      var x = s.x - 16;
-      var y = s.y - 16;
-      switch (s.id) {
-        case 0:  // 2x2 star
-        case 1:  // 1x1 star
-          c.fillStyle = magic2.palette(15)[context.color];
-          c.fillRect(
-              (x + 4) * scaleWideX + context.base,
-              (y + 4) * scaleY,
-              s.id ? 1 : 2,
-              s.id ? 1 : 2);
+    for (let context of contexts) {
+      var scaleWideX = context.width / 256;
+      var scaleX = c.canvas.height / 256 * context.aspect;
+      var scaleY = c.canvas.height / 256;
+      var offsetX = context.offset;
+      for (var i = 0; i < 128; ++i) {
+        var s = sprites[i];
+        if (!s.show)
           continue;
-        case 7: {  // scope
-          var scale = 1 + (s.tick++ % 10) / 10;
-          var w = 16 * scaleX / scale;
-          var h = 16 * scaleY / scale;
-          var bx = x * scaleX + offsetX + (16 * scaleX - w) / 2;
-          var by = y * scaleY + (16 * scaleY - h) / 2;
-          c.strokeStyle = magic2.palette(11)[context.color];
-          c.beginPath();
-          c.moveTo(bx, by + h / 2);
-          c.lineTo(bx, by + h / 5);
-          c.lineTo(bx + w / 5, by);
-          c.lineTo(bx + w / 2, by);
-          c.moveTo(bx + w, by + h / 2);
-          c.lineTo(bx + w, by + h * 4 / 5);
-          c.lineTo(bx + w * 4 / 5, by + h);
-          c.lineTo(bx + w / 2, by + h);
-          c.moveTo(bx + w / 4, by + h / 2);
-          c.lineTo(bx + w / 3, by + h * 2 / 3);
-          c.lineTo(bx + w * 2 / 3, by + h * 2 / 3);
-          c.lineTo(bx + w * 3 / 4, by + h / 2);
-          c.moveTo(bx + w * 2 / 5, by + h / 2);
-          c.lineTo(bx + w * 4 / 11, by + h * 4 / 7);
-          c.moveTo(bx + w * 3 / 5, by + h / 2);
-          c.lineTo(bx + w * 7 / 11, by + h * 4 / 7);
-          c.moveTo(bx + w * 4 / 16, by + h * 12 / 16);
-          c.lineTo(bx + w * 3 / 16, by + h * 13 / 16);
-          c.moveTo(bx + w * 2 / 7, by + h / 3);
-          c.lineTo(bx + w * 5 / 7, by + h / 3);
-          c.stroke();
-          c.closePath();
-          c.strokeStyle = magic2.palette(5)[context.color];
-          c.beginPath();
-          c.moveTo(bx + w * 12 / 16, by + h * 12 / 16);
-          c.lineTo(bx + w * 13 / 16, by + h * 13 / 16);
-          c.stroke();
-          c.closePath();
-          continue; }
-        default:
-          console.warn('sprite ' + s.id + ' is not supported, showing a TOFU.')
-        break;
+        var x = s.x - 16;
+        var y = s.y - 16;
+        switch (s.id) {
+          case 0:  // 2x2 star
+          case 1:  // 1x1 star
+            c.fillStyle = magic2.palette(15)[context.color];
+            c.fillRect(
+                (x + 4) * scaleWideX + context.base,
+                (y + 4) * scaleY,
+                s.id ? 1 : 2,
+                s.id ? 1 : 2);
+            continue;
+          case 7: {  // scope
+            var scale = 1 + (s.tick++ % 10) / 10;
+            var w = 16 * scaleX / scale;
+            var h = 16 * scaleY / scale;
+            var bx = x * scaleX + offsetX + (16 * scaleX - w) / 2;
+            var by = y * scaleY + (16 * scaleY - h) / 2;
+            c.strokeStyle = magic2.palette(11)[context.color];
+            c.beginPath();
+            c.moveTo(bx, by + h / 2);
+            c.lineTo(bx, by + h / 5);
+            c.lineTo(bx + w / 5, by);
+            c.lineTo(bx + w / 2, by);
+            c.moveTo(bx + w, by + h / 2);
+            c.lineTo(bx + w, by + h * 4 / 5);
+            c.lineTo(bx + w * 4 / 5, by + h);
+            c.lineTo(bx + w / 2, by + h);
+            c.moveTo(bx + w / 4, by + h / 2);
+            c.lineTo(bx + w / 3, by + h * 2 / 3);
+            c.lineTo(bx + w * 2 / 3, by + h * 2 / 3);
+            c.lineTo(bx + w * 3 / 4, by + h / 2);
+            c.moveTo(bx + w * 2 / 5, by + h / 2);
+            c.lineTo(bx + w * 4 / 11, by + h * 4 / 7);
+            c.moveTo(bx + w * 3 / 5, by + h / 2);
+            c.lineTo(bx + w * 7 / 11, by + h * 4 / 7);
+            c.moveTo(bx + w * 4 / 16, by + h * 12 / 16);
+            c.lineTo(bx + w * 3 / 16, by + h * 13 / 16);
+            c.moveTo(bx + w * 2 / 7, by + h / 3);
+            c.lineTo(bx + w * 5 / 7, by + h / 3);
+            c.stroke();
+            c.closePath();
+            c.strokeStyle = magic2.palette(5)[context.color];
+            c.beginPath();
+            c.moveTo(bx + w * 12 / 16, by + h * 12 / 16);
+            c.lineTo(bx + w * 13 / 16, by + h * 13 / 16);
+            c.stroke();
+            c.closePath();
+            continue; }
+          default:
+            console.warn('sprite ' + s.id + ' is not supported, showing a TOFU.')
+          break;
+        }
+        // Default: TOFU.
+        c.fillStyle = magic2.palette(15)[context.color];
+        c.fillRect(
+            x * scaleX + offsetX,
+            y * scaleY,
+            16 * scaleX,
+            16 * scaleY);
       }
-      // Default: TOFU.
-      c.fillStyle = magic2.palette(15)[context.color];
-      c.fillRect(
-          x * scaleX + offsetX,
-          y * scaleY,
-          16 * scaleX,
-          16 * scaleY);
     }
   });
 
@@ -637,8 +639,9 @@
   };
 
   // TODO: Not to draw on each frame, but use a dedicated canvas.
-  magic2.vsync(function(c, context) {
-    window.bg_update(c, 0, context);
+  magic2.vsync(function(c, contexts) {
+    for (let context of contexts)
+      window.bg_update(c, 0, context);
   });
 
   window.iocs_bgscrlst = function(page, x, y) {
