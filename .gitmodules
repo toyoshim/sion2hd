@@ -4,3 +4,6 @@
 [submodule "third_party/magic2.js"]
 	path = third_party/magic2.js
 	url = https://github.com/toyoshim/magic2.js.git
+[submodule "docs/three"]
+	path = docs/3d/three
+	url = https://github.com/mrdoob/three.js.git
