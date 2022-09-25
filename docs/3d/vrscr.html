@@ -1,0 +1,293 @@
+<!doctype html>
+<html>
+  <head>
+    <title>SION2 HD VR Screen</title>
+    <meta name="theme-color" content="#333333">
+    <meta charset="utf-8">
+    <link
+        href="https://fonts.googleapis.com/css?family=Geo|Audiowide|Fira+Mono"
+        rel="stylesheet">
+    <!--
+     Copyright 2020 Takashi Toyoshima <toyoshim@gmail.com>. All rights reserved.
+     Use of this source code is governed by a BSD-style license that can be
+     found in the LICENSE file.
+    -->
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #000;
+      }
+      div {
+        border: 0px none;
+      }
+      canvas {
+        display: block;
+        border: 0px none;
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        opacity: 1;
+      }
+      iframe {
+        width: 0;
+        height: 0;
+        border: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <canvas id="graphic0" style="z-index: -1;"></canvas>
+      <canvas id="graphic1" style="z-index: -1;"></canvas>
+      <canvas id="graphic2" style="z-index: -1;"></canvas> <!-- for io.js -->
+      <canvas id="bg2" style="z-index: -1;"></canvas> <!-- for config.js -->
+    </div>
+    <script type="text/javascript" charset="UTF-8" src="magic2.js"></script>
+    <script type='text/javascript'>
+      const rAF = window.requestAnimationFrame;
+      window.requestAnimationFrame = (callback, caller) => {
+        rAF(callback);
+      };
+
+      var xhr = function(url) {
+        return new Promise(function (resolve, reject) {
+          var xhr = new XMLHttpRequest();
+          xhr.open('GET', url, true);
+          xhr.responseType = 'arraybuffer';
+          xhr.addEventListener('load', e => {
+            resolve(xhr.response);
+            xhr.abort();
+          }, false);
+          xhr.send();
+        });
+      };
+
+      document.fonts.load('10px Audiowide');
+      document.fonts.load('10px \'Fira Mono\'');
+      document.fonts.load('10px Geo');
+      var canvas = document.getElementsByTagName('canvas');
+      /* global Magic2 */
+      var magic2 = new Magic2(Array.prototype.map.call(canvas, function(c) {
+        c.width = 1920; //1280;
+        c.height = 1080; //720;
+        return c.getContext('2d');
+      }));
+
+      var zmd = {};
+      var se = {};
+      var zmdPending = 0;
+      var audioContext = new (window.AudioContext || window.webkitAudioContext);
+      var reverb = audioContext.createConvolver();
+      reverb.connect(audioContext.destination);
+      xhr('ir.wav').then(data =>
+          audioContext.decodeAudioData(data, buffer => reverb.buffer = buffer));
+
+      /* global ZMUSIC */
+      window.zmusic_bind = function(address, name) {
+        var key = address;
+        xhr('sion2/' + name).then(data => {
+          zmd[key] = data;
+          if (zmdPending == key && ZMUSIC.state != ZMUSIC.WAITING)
+            ZMUSIC.play(data);
+        });
+      };
+      window.zmusic_call = function(base, d1, d2, d3, d4, a1) {
+        var data = null;
+        var offset = 0;
+        var length = 0;
+        if (d1 == 0x11) {
+          zmdPending = 0;
+          if (zmd[a1] && ZMUSIC.state != ZMUSIC.WAITING)
+            ZMUSIC.play(zmd[a1]);
+          else
+            zmdPending = a1;
+          return;
+        } else if (d1 == 0x12) {
+          if (!se[a1]) {
+            se[a1] = new Uint8Array(256);
+            for (var i = 0; i < 256; ++i)
+              se[a1][i] = Module.HEAPU8[base + a1 + i];
+          }
+          data = se[a1].buffer;
+          length = 256;
+          a1 = 0x170000;
+        }
+        ZMUSIC.trap(d1, d2, d3, d4, a1, data, offset, length);
+      };
+
+      var Module = {
+        preRun: [function() {
+          FS.mkdir('/persistent');
+          FS.mount(IDBFS, {}, '/persistent');
+          FS.syncfs(true, function (e) {});
+        }],
+        postRun: [],
+        arguments: ['sion2.x'],
+        print: function(text) {
+          if (arguments.length > 1)
+            text = Array.prototype.slice.call(arguments).join('\n');
+          console.warn(text);
+        },
+        printErr: function(text) {
+          if (arguments.length > 1)
+            text = Array.prototype.slice.call(arguments).join('\n');
+          console.error(text);
+        },
+        preInit: function() {
+          Module.addRunDependency("zmusic");
+          Promise.all([
+              ZMUSIC.install(
+                  ['ZMUSIC110.X', '-n', '-u', '-t256', '-p400', '-w256'],
+                  { context: audioContext }),
+              xhr('sion2/NEIRO.ZMS'),
+              xhr('sion2/SION2.ZPD')
+          ]).then(results => {
+            /* global navigator */
+            if (navigator.userAgent.indexOf('iPhone') >= 0) {
+              document.addEventListener('touchstart', e => {
+                ZMUSIC.compileAndPlay(results[1]);
+                ZMUSIC.play(null, results[2]);
+                if (zmdPending && zmd[zmdPending])
+                  ZMUSIC.play(zmd[zmdPending]);
+              }, { once: true, capture: false });
+            } else {
+              ZMUSIC.compileAndPlay(results[1]);
+              ZMUSIC.play(null, results[2]);
+            }
+            magic2.vr(1);
+            ZMUSIC.disconnect();
+            ZMUSIC.connect(audioContext.destination);
+            ZMUSIC.connect(reverb);
+            window.io_set_mode(1);
+          });
+          Module.addRunDependency("fonts");
+          document.fonts.ready.then(function() {
+            Module.removeRunDependency("fonts");
+          });
+        }
+      };
+    </script>
+    <script type="module">
+      import * as THREE from './three/build/three.module.js';
+      import { BoxLineGeometry } from './three/examples/jsm/geometries/BoxLineGeometry.js';
+      import { XRControllerModelFactory } from './three/examples/jsm/webxr/XRControllerModelFactory.js';
+      import { VRButton } from './three/examples/jsm/webxr/VRButton.js';
+      
+      // Initialize Scene
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x101020);
+
+      // Room
+      const room = new THREE.LineSegments(
+        new BoxLineGeometry(8, 4, 10, 8, 4, 10),
+        new THREE.LineBasicMaterial( { color: 0xff0000 })
+      );
+      room.geometry.translate(0, 2, 0);
+      scene.add(room);
+
+      // Monitor
+      const monitor = new THREE.Mesh(
+        new THREE.PlaneGeometry(16 / 4, 9 / 4),
+        new THREE.ShaderMaterial({
+          uniforms: {
+            uG0: { value: new THREE.Texture(document.getElementById('graphic0')) },
+            uG1: { value: new THREE.Texture(document.getElementById('graphic1')) },
+            uG2: { value: new THREE.Texture(document.getElementById('graphic2')) },
+            uBG: { value: new THREE.Texture(document.getElementById('bg2')) },
+            uO: { value: new THREE.Vector4(1.0, 1.0, 1.0, 1.0) },
+            uCPos: { value: new THREE.Vector2(0.0, 0.0) },
+          },
+          vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+          `,
+          fragmentShader: `
+          uniform sampler2D uG0;
+          uniform sampler2D uG1;
+          uniform sampler2D uG2;
+          uniform sampler2D uBG;
+          uniform vec4 uO;
+          uniform vec2 uCPos;
+          varying vec2 vUv;
+          void main() {
+            float bx = step((uCPos.x + uCPos.y) / 2.0, cameraPosition.x) / 2.0;
+            vec2 xy = vec2(bx + vUv.x / 2.0, vUv.y);
+            vec4 t = texture2D(uG0, xy) * uO.x + texture2D(uG1, xy) * uO.y +
+                texture2D(uG2, xy) * uO.z + texture2D(uBG, xy) * uO.w;
+            gl_FragColor = vec4(t.rgb, 1.0);
+          }
+          `
+        })
+      );
+      monitor.translateY(1.5);
+      monitor.translateZ(-4);
+      monitor.transparent = false;
+      scene.add(monitor);
+
+      // Lighting
+      scene.add(new THREE.HemisphereLight(0x606060, 0x404040));
+      const light = new THREE.DirectionalLight(0xffffff);
+      light.position.set(1, 1, 1).normalize();
+      scene.add(light);
+
+      // Initialize Camera
+      const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 1.6, 3);
+
+      // Initialize Rendeerr
+      const renderer = new THREE.WebGLRenderer( { antialias: true } );
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      renderer.xr.enabled = true;
+      document.body.appendChild(renderer.domElement);
+
+      // Initialize VR Button
+      const button = VRButton.createButton(renderer);
+      document.body.appendChild(button);
+      button.addEventListener('click', () => {
+        ZMUSIC.resume();
+        Module.removeRunDependency("zmusic");
+        Module._set_slow_mode(1);
+      });
+
+      // Start
+      navigator.getGamepads = () => {
+        const session = renderer.xr.getSession();
+        if (!session)
+          return [];
+        return [session.inputSources[0].gamepad];
+      };
+      renderer.setAnimationLoop(() => {
+        if (Browser.mainLoop.runner)  /* global Browser */
+          Browser.mainLoop.runner();
+ 
+        monitor.material.uniforms.uG0.value.needsUpdate = true;
+        monitor.material.uniforms.uG1.value.needsUpdate = true;
+        monitor.material.uniforms.uG2.value.needsUpdate = true;
+        monitor.material.uniforms.uBG.value.needsUpdate = true;
+        const o = Array.prototype.map.call(
+          document.getElementsByTagName('canvas'),
+          function (c) { return Number(c.style.opacity); });
+        monitor.material.uniforms.uO.value = new THREE.Vector4(o[0], o[1], o[2], o[3]);
+        monitor.material.uniforms.uO.value.needsUpdate = true;
+        if (renderer.xr.isPresenting) {
+          const cameras = renderer.xr.getCamera(camera).cameras;
+          monitor.material.uniforms.uCPos.value = new THREE.Vector2(cameras[0].matrixWorld.elements[12], cameras[1].matrixWorld.elements[12]);
+          monitor.material.uniforms.uCPos.value.needsUpdate = true;
+        }
+        renderer.render(scene, camera);
+      });
+    </script>
+    <script defer type="text/javascript" charset="UTF-8" src="iocs.js"></script>
+    <script defer type="text/javascript" charset="UTF-8" src="io.js"></script>
+    <script defer type="text/javascript" charset="UTF-8" src="zmusic.js">
+    </script>
+    <script defer type="text/javascript" charset="ShiftJIS" src="sion2.js">
+    </script>
+  </body>
+</html>

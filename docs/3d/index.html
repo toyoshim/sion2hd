@@ -1,0 +1,248 @@
+<!doctype html>
+<html>
+  <head>
+    <title>SION2 HD</title>
+    <meta name="theme-color" content="#333333">
+    <meta charset="utf-8">
+    <link rel="manifest" href="manifest.json">
+    <link
+        href="https://fonts.googleapis.com/css?family=Geo|Audiowide|Fira+Mono"
+        rel="stylesheet">
+    <!--
+     Copyright 2016 Takashi Toyoshima <toyoshim@gmail.com>. All rights reserved.
+     Use of this source code is governed by a BSD-style license that can be
+     found in the LICENSE file.
+    -->
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #000;
+      }
+      div {
+        border: 0px none;
+      }
+      canvas {
+        display: block;
+        border: 0px none;
+        position: absolute;
+        _position: relative;
+        left: 0px;
+        top: 0px;
+      }
+      iframe {
+        width: 0;
+        height: 0;
+        border: 0;
+      }
+      button {
+        display: none;
+        position: absolute;
+        right: 16px;
+        bottom: 16px;
+        float: right;
+        z-index: 5;
+        padding: 0.1em 0.5em;
+        background: #000;
+        color: #fff;
+        font-family: 'Geo';
+        font-size: 16pt;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <canvas id="graphic0" style="z-index: 0;"></canvas>
+      <canvas id="graphic1" style="z-index: 1;"></canvas>
+      <canvas id="graphic2" style="z-index: 2;"></canvas> <!-- for io.js -->
+      <canvas id="bg2" style="z-index: 3;"></canvas> <!-- for config.js -->
+      <canvas id="xr" style="z-index: 4;"></canvas> <!-- for WebXR -->
+      <button onclick="xr()">WebXR (experimental)</button>
+    </div>
+    <script type="text/javascript" charset="UTF-8" src="magic2.js"></script>
+    <script type='text/javascript'>
+      const rAF = window.requestAnimationFrame;
+      let rAF_main_lastId = 0;
+      let rAF_config_lastId = 0;
+      let rAF_config_callback = null;
+      window.requestAnimationFrame = (callback, caller) => {
+        const id = rAF(callback);
+        if (caller == 'config') {
+          rAF_config_lastId = id;
+          rAF_config_callback = callback;
+        } else {
+          rAF_main_lastId = id;
+        }
+      };
+
+      const xr = () => {
+        window.cancelAnimationFrame(rAF_main_lastId);
+        window.cancelAnimationFrame(rAF_config_lastId);
+        Browser.requestAnimationFrame = () => {};
+        magic2.xr(true, function () {
+          if (Browser.mainLoop.runner)  /* global Browser */
+            Browser.mainLoop.runner();
+          if (rAF_config_callback)
+            rAF_config_callback(0.0);
+        });
+        config.enableXR();
+        document.getElementsByTagName('button')[0].style.display = 'none';
+      };
+
+      var xhr = function(url) {
+        return new Promise(function (resolve, reject) {
+          var xhr = new XMLHttpRequest();
+          xhr.open('GET', url, true);
+          xhr.responseType = 'arraybuffer';
+          xhr.addEventListener('load', e => {
+            resolve(xhr.response);
+            xhr.abort();
+          }, false);
+          xhr.send();
+        });
+      };
+
+      document.fonts.load('10px Audiowide');
+      document.fonts.load('10px \'Fira Mono\'');
+      document.fonts.load('10px Geo');
+      var canvas = document.getElementsByTagName('canvas');
+      /* global Magic2 */
+      var magic2 = new Magic2(Array.prototype.map.call(canvas, function(c) {
+        // Changes canvas size to fullfill the window.
+        c.width = window.innerWidth;
+        c.height = window.innerHeight;
+        if (c.id === 'xr')
+          return null;
+        return c.getContext('2d');
+      }));
+
+      window.addEventListener('resize', function() {
+        Array.prototype.map.call(
+            document.getElementsByTagName('canvas'), function(c) {
+          c.width = window.innerWidth;
+          c.height = window.innerHeight;
+          window.io_set_mode(magic2.vr());
+          config.draw(); /* global config */
+        });
+      }, false);
+
+      var zmd = {};
+      var se = {};
+      var zmdPending = 0;
+      var audioContext = new (window.AudioContext || window.webkitAudioContext);
+      var reverb = audioContext.createConvolver();
+      reverb.connect(audioContext.destination);
+      xhr('ir.wav').then(data =>
+          audioContext.decodeAudioData(data, buffer => reverb.buffer = buffer));
+
+      /* global ZMUSIC */
+      window.zmusic_bind = function(address, name) {
+        var key = address;
+        xhr('sion2/' + name).then(data => {
+          zmd[key] = data;
+          if (zmdPending == key && ZMUSIC.state != ZMUSIC.WAITING)
+            ZMUSIC.play(data);
+        });
+      };
+      window.zmusic_call = function(base, d1, d2, d3, d4, a1) {
+        var data = null;
+        var offset = 0;
+        var length = 0;
+        if (d1 == 0x11) {
+          zmdPending = 0;
+          if (zmd[a1] && ZMUSIC.state != ZMUSIC.WAITING)
+            ZMUSIC.play(zmd[a1]);
+          else
+            zmdPending = a1;
+          return;
+        } else if (d1 == 0x12) {
+          if (!se[a1]) {
+            se[a1] = new Uint8Array(256);
+            for (var i = 0; i < 256; ++i)
+              se[a1][i] = Module.HEAPU8[base + a1 + i];
+          }
+          data = se[a1].buffer;
+          length = 256;
+          a1 = 0x170000;
+        }
+        ZMUSIC.trap(d1, d2, d3, d4, a1, data, offset, length);
+      };
+
+      var Module = {
+        preRun: [function() {
+          FS.mkdir('/persistent');
+          FS.mount(IDBFS, {}, '/persistent');
+          FS.syncfs(true, function (e) {});
+        }],
+        postRun: [],
+        arguments: ['sion2.x'],
+        print: function(text) {
+          if (arguments.length > 1)
+            text = Array.prototype.slice.call(arguments).join('\n');
+          console.warn(text);
+        },
+        printErr: function(text) {
+          if (arguments.length > 1)
+            text = Array.prototype.slice.call(arguments).join('\n');
+          console.error(text);
+        },
+        preInit: function() {
+          Module.addRunDependency("zmusic");
+          Promise.all([
+              ZMUSIC.install(
+                  ['ZMUSIC110.X', '-n', '-u', '-t256', '-p400', '-w256'],
+                  { context: audioContext }),
+              xhr('sion2/NEIRO.ZMS'),
+              xhr('sion2/SION2.ZPD')
+          ]).then(results => {
+            /* global navigator */
+            navigator.xr && navigator.xr.isSessionSupported('immersive-vr').then(result => {
+              document.getElementsByTagName('button')[0].style.display = result ? 'block' : 'none';
+            });
+            window.config.start();
+            if (navigator.userAgent.indexOf('iPhone') >= 0) {
+              document.addEventListener('touchstart', e => {
+                ZMUSIC.compileAndPlay(results[1]);
+                ZMUSIC.play(null, results[2]);
+                if (zmdPending && zmd[zmdPending])
+                  ZMUSIC.play(zmd[zmdPending]);
+              }, { once: true, capture: false });
+            } else {
+              ZMUSIC.compileAndPlay(results[1]);
+              ZMUSIC.play(null, results[2]);
+            }
+            Module.removeRunDependency("zmusic");
+          });
+          Module.addRunDependency("fonts");
+          document.fonts.ready.then(function() {
+            Module.removeRunDependency("fonts");
+          });
+          config.onupdate = function() {
+            ZMUSIC.disconnect();
+            ZMUSIC.resume();
+            if (config.useSound())
+              ZMUSIC.connect(audioContext.destination);
+            if (config.useReverb())
+              ZMUSIC.connect(reverb);
+            Module._set_slow_mode(config.slowMode());
+            window.io_set_mode(config.videoMode());
+          };
+          Module.addRunDependency("config");
+          config.ready.then(function() {
+            // document.getElementsByTagName('button')[0].style.display = 'none';
+            Module.removeRunDependency("config");
+            config.onupdate();
+          });
+        }
+      };
+    </script>
+    <script defer type="text/javascript" charset="UTF-8" src="iocs.js"></script>
+    <script defer type="text/javascript" charset="UTF-8" src="io.js"></script>
+    <script defer type="text/javascript" charset="UTF-8" src="config.js">
+    </script>
+    <script defer type="text/javascript" charset="UTF-8" src="zmusic.js">
+    </script>
+    <script defer type="text/javascript" charset="ShiftJIS" src="sion2.js">
+    </script>
+  </body>
+</html>
